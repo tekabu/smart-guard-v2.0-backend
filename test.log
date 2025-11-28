@@ -1,0 +1,192 @@
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Feature\Api\DeviceControllerTest
+  ✓ can list devices                                                     0.15s
+  ✓ can create device                                                    0.01s
+  ✓ can show device                                                      0.01s
+  ✓ can update device                                                    0.01s
+  ✓ can delete device                                                    0.01s
+  ✓ cannot create device with duplicate device id                        0.01s
+  ✓ requires device id                                                   0.01s
+
+   PASS  Tests\Feature\Api\RoomControllerTest
+  ✓ can list rooms                                                       0.01s
+  ✓ can create room                                                      0.01s
+  ✓ can show room                                                        0.01s
+  ✓ can update room                                                      0.01s
+  ✓ can delete room                                                      0.01s
+  ✓ requires room number                                                 0.01s
+
+   PASS  Tests\Feature\Api\ScheduleControllerTest
+  ✓ can list schedules                                                   0.02s
+  ✓ can create schedule                                                  0.01s
+  ✓ can show schedule                                                    0.01s
+  ✓ can update schedule                                                  0.01s
+  ✓ can delete schedule                                                  0.01s
+  ✓ cannot create schedule with invalid day                              0.01s
+  ✓ requires all fields                                                  0.01s
+
+   PASS  Tests\Feature\Api\SchedulePeriodControllerTest
+  ✓ can list schedule periods                                            0.02s
+  ✓ can create schedule period                                           0.01s
+  ✓ can show schedule period                                             0.01s
+  ✓ can update schedule period                                           0.01s
+  ✓ can delete schedule period                                           0.01s
+  ✓ requires all fields                                                  0.01s
+
+   PASS  Tests\Feature\Api\SubjectControllerTest
+  ✓ can list subjects                                                    0.01s
+  ✓ can create subject                                                   0.01s
+  ✓ can show subject                                                     0.01s
+  ✓ can update subject                                                   0.01s
+  ✓ can delete subject                                                   0.01s
+  ✓ cannot create subject with duplicate name                            0.01s
+  ✓ requires subject                                                     0.01s
+
+   PASS  Tests\Feature\Api\UserAccessLogControllerTest
+  ✓ can list access logs                                                 0.02s
+  ✓ can create access log                                                0.01s
+  ✓ can show access log                                                  0.01s
+  ✓ can delete access log                                                0.01s
+  ✓ cannot create log with invalid access method                         0.01s
+  ✓ requires all fields                                                  0.01s
+
+   PASS  Tests\Feature\Api\UserAuditLogControllerTest
+  ✓ can list audit logs                                                  0.01s
+  ✓ can create audit log                                                 0.01s
+  ✓ can show audit log                                                   0.01s
+  ✓ can delete audit log                                                 0.01s
+  ✓ requires user id and description                                     0.01s
+
+   PASS  Tests\Feature\Api\UserControllerTest
+  ✓ can list users                                                       0.01s
+  ✓ can create user                                                      0.01s
+  ✓ can show user                                                        0.01s
+  ✓ can update user                                                      0.01s
+  ✓ can delete user                                                      0.01s
+  ✓ cannot create user with duplicate email                              0.01s
+  ✓ cannot create user with invalid role
+  ✓ requires name email password role                                    0.01s
+
+   PASS  Tests\Feature\Api\UserFingerprintControllerTest
+  ✓ can list fingerprints                                                0.01s
+  ✓ can create fingerprint                                               0.01s
+  ✓ can show fingerprint                                                 0.01s
+  ✓ can update fingerprint                                               0.01s
+  ✓ can delete fingerprint                                               0.01s
+  ✓ cannot create fingerprint with duplicate fingerprint id              0.01s
+  ✓ requires user id and fingerprint id                                  0.01s
+
+   PASS  Tests\Feature\Api\UserRfidControllerTest
+  ✓ can list rfids                                                       0.02s
+  ✓ can create fingerprint                                               0.01s
+  ✓ can show fingerprint                                                 0.01s
+  ✓ can update fingerprint                                               0.01s
+  ✓ can delete fingerprint                                               0.01s
+  ✓ cannot create fingerprint with duplicate card id                     0.01s
+  ✓ requires user id and card id                                         0.01s
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                        0.01s
+
+  Tests:    68 passed (196 assertions)
+  Duration: 0.79s
+
+Device Controller (Tests\Feature\Api\DeviceController)
+ [x] Can list devices
+ [x] Can create device
+ [x] Can show device
+ [x] Can update device
+ [x] Can delete device
+ [x] Cannot create device with duplicate device id
+ [x] Requires device id
+
+Example (Tests\Feature\Example)
+ [x] The application returns a successful response
+
+Example (Tests\Unit\Example)
+ [x] That true is true
+
+Room Controller (Tests\Feature\Api\RoomController)
+ [x] Can list rooms
+ [x] Can create room
+ [x] Can show room
+ [x] Can update room
+ [x] Can delete room
+ [x] Requires room number
+
+Schedule Controller (Tests\Feature\Api\ScheduleController)
+ [x] Can list schedules
+ [x] Can create schedule
+ [x] Can show schedule
+ [x] Can update schedule
+ [x] Can delete schedule
+ [x] Cannot create schedule with invalid day
+ [x] Requires all fields
+
+Schedule Period Controller (Tests\Feature\Api\SchedulePeriodController)
+ [x] Can list schedule periods
+ [x] Can create schedule period
+ [x] Can show schedule period
+ [x] Can update schedule period
+ [x] Can delete schedule period
+ [x] Requires all fields
+
+Subject Controller (Tests\Feature\Api\SubjectController)
+ [x] Can list subjects
+ [x] Can create subject
+ [x] Can show subject
+ [x] Can update subject
+ [x] Can delete subject
+ [x] Cannot create subject with duplicate name
+ [x] Requires subject
+
+User Access Log Controller (Tests\Feature\Api\UserAccessLogController)
+ [x] Can list access logs
+ [x] Can create access log
+ [x] Can show access log
+ [x] Can delete access log
+ [x] Cannot create log with invalid access method
+ [x] Requires all fields
+
+User Audit Log Controller (Tests\Feature\Api\UserAuditLogController)
+ [x] Can list audit logs
+ [x] Can create audit log
+ [x] Can show audit log
+ [x] Can delete audit log
+ [x] Requires user id and description
+
+User Controller (Tests\Feature\Api\UserController)
+ [x] Can list users
+ [x] Can create user
+ [x] Can show user
+ [x] Can update user
+ [x] Can delete user
+ [x] Cannot create user with duplicate email
+ [x] Cannot create user with invalid role
+ [x] Requires name email password role
+
+User Fingerprint Controller (Tests\Feature\Api\UserFingerprintController)
+ [x] Can list fingerprints
+ [x] Can create fingerprint
+ [x] Can show fingerprint
+ [x] Can update fingerprint
+ [x] Can delete fingerprint
+ [x] Cannot create fingerprint with duplicate fingerprint id
+ [x] Requires user id and fingerprint id
+
+User Rfid Controller (Tests\Feature\Api\UserRfidController)
+ [x] Can list rfids
+ [x] Can create fingerprint
+ [x] Can show fingerprint
+ [x] Can update fingerprint
+ [x] Can delete fingerprint
+ [x] Cannot create fingerprint with duplicate card id
+ [x] Requires user id and card id
+
+
+------------------------------------------------------------
+Summary: 68 tests, 68 passed, 0 failed, 100.00% success rate (196 assertions across all tests)
+------------------------------------------------------------

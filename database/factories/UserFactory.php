@@ -23,7 +23,7 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'role' => fake()->randomElement($roles),
             'active' => true,
-            'last_accessed_at' => null,
+            'last_access_at' => null,
             'student_id' => fake()->optional()->numerify('STU-######'),
             'faculty_id' => fake()->optional()->numerify('FAC-######'),
             'course' => fake()->optional()->randomElement(['Computer Science', 'Information Technology', 'Engineering', 'Business']),

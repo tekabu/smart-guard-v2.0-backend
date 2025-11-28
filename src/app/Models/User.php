@@ -21,6 +21,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'active',
+        'last_access_at',
+        'student_id',
+        'faculty_id',
+        'course',
+        'year_level',
+        'attendance_rate',
+        'department',
     ];
 
     /**
@@ -43,6 +52,34 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'active' => 'boolean',
+            'last_access_at' => 'datetime',
+            'attendance_rate' => 'decimal:2',
         ];
+    }
+
+    public function fingerprints()
+    {
+        return $this->hasMany(UserFingerprint::class);
+    }
+
+    public function rfids()
+    {
+        return $this->hasMany(UserRfid::class);
+    }
+
+    public function accessLogs()
+    {
+        return $this->hasMany(UserAccessLog::class);
+    }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(UserAuditLog::class);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
     }
 }
