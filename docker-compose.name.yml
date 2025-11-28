@@ -1,0 +1,35 @@
+services:
+  nginx:
+    container_name: test001-nginx
+    networks:
+      - test001
+
+  php:
+    container_name: test001-php
+    networks:
+      - test001
+
+  mysql:
+    container_name: test001-mysql
+    networks:
+      - test001
+
+  phpmyadmin:
+    container_name: test001-phpmyadmin
+    networks:
+      - test001
+
+  filebrowser:
+    container_name: test001-filebrowser
+    networks:
+      - test001
+
+  cloudflared:
+    container_name: test001-cloudflared
+    networks:
+      - test001
+
+networks:
+  test001:
+    driver: bridge
+    name: test001

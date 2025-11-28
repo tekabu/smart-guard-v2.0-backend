@@ -1,0 +1,53 @@
+services:
+  nginx:
+    build: 
+      context: ./build/nginx
+      dockerfile: Dockerfile
+    container_name: smart-guard-nginx
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./src:/var/www/html
+    ports:
+      - 8021:80
+    restart: unless-stopped
+
+  php:
+    build: 
+      context: ./build/php
+      dockerfile: Dockerfile
+    container_name: smart-guard-php
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./src:/var/www/html
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: smart-guard-mysql
+    ports:
+      - "8022:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: smart_guard
+      MYSQL_USER: smart_guard
+      MYSQL_PASSWORD: smart_guard_password
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: smart-guard-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "8023:80"
+    depends_on:
+      - mysql
