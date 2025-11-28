@@ -16,7 +16,9 @@ class SchedulePeriodControllerTest extends TestCase
     {
         SchedulePeriod::factory()->count(3)->create();
         $response = $this->getJson('/api/schedule-periods');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_schedule_period()
@@ -30,7 +32,10 @@ class SchedulePeriodControllerTest extends TestCase
         ];
 
         $response = $this->postJson('/api/schedule-periods', $periodData);
-        $response->assertStatus(201)->assertJsonFragment(['start_time' => '08:00:00', 'end_time' => '09:30:00']);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.start_time', '08:00:00')
+            ->assertJsonPath('data.end_time', '09:30:00');
         $this->assertDatabaseHas('schedule_periods', ['start_time' => '08:00:00']);
     }
 
@@ -38,7 +43,9 @@ class SchedulePeriodControllerTest extends TestCase
     {
         $period = SchedulePeriod::factory()->create();
         $response = $this->getJson('/api/schedule-periods/' . $period->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $period->id]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $period->id);
     }
 
     public function test_can_update_schedule_period()
@@ -46,7 +53,9 @@ class SchedulePeriodControllerTest extends TestCase
         $period = SchedulePeriod::factory()->create();
         $updateData = ['start_time' => '10:00:00', 'end_time' => '11:30:00'];
         $response = $this->putJson('/api/schedule-periods/' . $period->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['start_time' => '10:00:00']);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.start_time', '10:00:00');
         $this->assertDatabaseHas('schedule_periods', ['id' => $period->id, 'start_time' => '10:00:00']);
     }
 

@@ -7,7 +7,9 @@ use App\Models\UserRfid;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
 
-\n    use ApiResponse;
+class UserRfidController extends Controller
+{
+    use ApiResponse;
 
     public function index()
     {

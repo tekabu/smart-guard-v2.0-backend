@@ -8,7 +8,9 @@ use App\Rules\NoScheduleOverlap;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
 
-\n    use ApiResponse;
+class SchedulePeriodController extends Controller
+{
+    use ApiResponse;
 
     public function index()
     {

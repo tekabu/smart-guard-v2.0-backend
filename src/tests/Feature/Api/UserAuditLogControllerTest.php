@@ -15,7 +15,9 @@ class UserAuditLogControllerTest extends TestCase
     {
         UserAuditLog::factory()->count(3)->create();
         $response = $this->getJson("/api/user-audit-logs");
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_audit_log()
@@ -25,9 +27,11 @@ class UserAuditLogControllerTest extends TestCase
             "user_id" => $user->id,
             "description" => "User logged in from web portal"
         ];
-        
+
         $response = $this->postJson("/api/user-audit-logs", $logData);
-        $response->assertStatus(201)->assertJsonFragment(["description" => "User logged in from web portal"]);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.description', 'User logged in from web portal');
         $this->assertDatabaseHas("user_audit_logs", ["description" => "User logged in from web portal"]);
     }
 
@@ -35,7 +39,9 @@ class UserAuditLogControllerTest extends TestCase
     {
         $log = UserAuditLog::factory()->create();
         $response = $this->getJson("/api/user-audit-logs/{$log->id}");
-        $response->assertStatus(200)->assertJsonFragment(["id" => $log->id]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $log->id);
     }
 
     public function test_can_delete_audit_log()

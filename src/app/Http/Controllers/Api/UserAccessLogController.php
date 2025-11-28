@@ -7,7 +7,9 @@ use App\Models\UserAccessLog;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
 
-\n    use ApiResponse;
+class UserAccessLogController extends Controller
+{
+    use ApiResponse;
 
     public function index()
     {

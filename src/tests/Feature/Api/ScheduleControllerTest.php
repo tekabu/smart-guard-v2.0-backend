@@ -17,7 +17,9 @@ class ScheduleControllerTest extends TestCase
     {
         Schedule::factory()->count(3)->create();
         $response = $this->getJson('/api/schedules');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_schedule()
@@ -35,7 +37,9 @@ class ScheduleControllerTest extends TestCase
         ];
 
         $response = $this->postJson('/api/schedules', $scheduleData);
-        $response->assertStatus(201)->assertJsonFragment(['day_of_week' => 'MONDAY']);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.day_of_week', 'MONDAY');
         $this->assertDatabaseHas('schedules', ['day_of_week' => 'MONDAY']);
     }
 
@@ -43,7 +47,9 @@ class ScheduleControllerTest extends TestCase
     {
         $schedule = Schedule::factory()->create();
         $response = $this->getJson('/api/schedules/' . $schedule->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $schedule->id]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $schedule->id);
     }
 
     public function test_can_update_schedule()
@@ -51,7 +57,9 @@ class ScheduleControllerTest extends TestCase
         $schedule = Schedule::factory()->create();
         $updateData = ['day_of_week' => 'FRIDAY', 'active' => false];
         $response = $this->putJson('/api/schedules/' . $schedule->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['day_of_week' => 'FRIDAY']);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.day_of_week', 'FRIDAY');
         $this->assertDatabaseHas('schedules', ['id' => $schedule->id, 'day_of_week' => 'FRIDAY']);
     }
 

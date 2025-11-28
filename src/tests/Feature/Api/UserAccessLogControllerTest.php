@@ -17,7 +17,9 @@ class UserAccessLogControllerTest extends TestCase
     {
         UserAccessLog::factory()->count(3)->create();
         $response = $this->getJson("/api/user-access-logs");
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_access_log()
@@ -25,16 +27,18 @@ class UserAccessLogControllerTest extends TestCase
         $user = User::factory()->create();
         $room = Room::factory()->create();
         $device = Device::factory()->create();
-        
+
         $logData = [
             "user_id" => $user->id,
             "room_id" => $room->id,
             "device_id" => $device->id,
             "access_used" => "FINGERPRINT"
         ];
-        
+
         $response = $this->postJson("/api/user-access-logs", $logData);
-        $response->assertStatus(201)->assertJsonFragment(["access_used" => "FINGERPRINT"]);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.access_used', 'FINGERPRINT');
         $this->assertDatabaseHas("user_access_logs", ["access_used" => "FINGERPRINT"]);
     }
 
@@ -42,7 +46,9 @@ class UserAccessLogControllerTest extends TestCase
     {
         $log = UserAccessLog::factory()->create();
         $response = $this->getJson("/api/user-access-logs/{$log->id}");
-        $response->assertStatus(200)->assertJsonFragment(["id" => $log->id]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $log->id);
     }
 
     public function test_can_delete_access_log()

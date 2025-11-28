@@ -15,7 +15,9 @@ class UserControllerTest extends TestCase
     {
         User::factory()->count(3)->create();
         $response = $this->getJson('/api/users');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_user()
@@ -33,7 +35,11 @@ class UserControllerTest extends TestCase
         ];
 
         $response = $this->postJson('/api/users', $userData);
-        $response->assertStatus(201)->assertJsonFragment(['name' => 'John Doe', 'email' => 'john@example.com', 'role' => 'STUDENT']);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.name', 'John Doe')
+            ->assertJsonPath('data.email', 'john@example.com')
+            ->assertJsonPath('data.role', 'STUDENT');
         $this->assertDatabaseHas('users', ['email' => 'john@example.com', 'role' => 'STUDENT']);
     }
 
@@ -41,7 +47,10 @@ class UserControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $response = $this->getJson('/api/users/' . $user->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $user->id, 'email' => $user->email]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.email', $user->email);
     }
 
     public function test_can_update_user()
@@ -49,7 +58,10 @@ class UserControllerTest extends TestCase
         $user = User::factory()->create();
         $updateData = ['name' => 'Jane Updated', 'role' => 'FACULTY'];
         $response = $this->putJson('/api/users/' . $user->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['name' => 'Jane Updated', 'role' => 'FACULTY']);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.name', 'Jane Updated')
+            ->assertJsonPath('data.role', 'FACULTY');
         $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Jane Updated']);
     }
 

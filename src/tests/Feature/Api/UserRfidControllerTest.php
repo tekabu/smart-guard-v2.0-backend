@@ -15,7 +15,9 @@ class UserRfidControllerTest extends TestCase
     {
         UserRfid::factory()->count(3)->create();
         $response = $this->getJson('/api/user-rfids');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_rfid()
@@ -23,7 +25,9 @@ class UserRfidControllerTest extends TestCase
         $user = User::factory()->create();
         $rfidData = ['user_id' => $user->id, 'card_id' => 'ABC123', 'active' => true];
         $response = $this->postJson('/api/user-rfids', $rfidData);
-        $response->assertStatus(201)->assertJsonFragment(['card_id' => 'ABC123']);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.card_id', 'ABC123');
         $this->assertDatabaseHas('user_rfids', ['card_id' => 'ABC123']);
     }
 
@@ -31,7 +35,10 @@ class UserRfidControllerTest extends TestCase
     {
         $rfid = UserRfid::factory()->create();
         $response = $this->getJson('/api/user-rfids/' . $rfid->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $rfid->id, 'card_id' => $rfid->card_id]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $rfid->id)
+            ->assertJsonPath('data.card_id', $rfid->card_id);
     }
 
     public function test_can_update_rfid()
@@ -39,7 +46,9 @@ class UserRfidControllerTest extends TestCase
         $rfid = UserRfid::factory()->create();
         $updateData = ['active' => false];
         $response = $this->putJson('/api/user-rfids/' . $rfid->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['active' => false]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.active', false);
         $this->assertDatabaseHas('user_rfids', ['id' => $rfid->id, 'active' => false]);
     }
 

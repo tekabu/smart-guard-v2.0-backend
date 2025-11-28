@@ -7,7 +7,9 @@ use App\Models\UserFingerprint;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
 
-\n    use ApiResponse;
+class UserFingerprintController extends Controller
+{
+    use ApiResponse;
 
     public function index()
     {

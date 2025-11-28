@@ -15,7 +15,9 @@ class RoomControllerTest extends TestCase
     {
         Room::factory()->count(3)->create();
         $response = $this->getJson('/api/rooms');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_room()
@@ -23,7 +25,9 @@ class RoomControllerTest extends TestCase
         $device = Device::factory()->create();
         $roomData = ['room_number' => '101', 'device_id' => $device->id, 'active' => true];
         $response = $this->postJson('/api/rooms', $roomData);
-        $response->assertStatus(201)->assertJsonFragment(['room_number' => '101']);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.room_number', '101');
         $this->assertDatabaseHas('rooms', ['room_number' => '101']);
     }
 
@@ -31,7 +35,10 @@ class RoomControllerTest extends TestCase
     {
         $room = Room::factory()->create();
         $response = $this->getJson('/api/rooms/' . $room->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $room->id, 'room_number' => $room->room_number]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $room->id)
+            ->assertJsonPath('data.room_number', $room->room_number);
     }
 
     public function test_can_update_room()
@@ -39,7 +46,10 @@ class RoomControllerTest extends TestCase
         $room = Room::factory()->create();
         $updateData = ['room_number' => '202', 'active' => false];
         $response = $this->putJson('/api/rooms/' . $room->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['room_number' => '202', 'active' => false]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.room_number', '202')
+            ->assertJsonPath('data.active', false);
         $this->assertDatabaseHas('rooms', ['id' => $room->id, 'room_number' => '202']);
     }
 

@@ -15,7 +15,9 @@ class UserFingerprintControllerTest extends TestCase
     {
         UserFingerprint::factory()->count(3)->create();
         $response = $this->getJson('/api/user-fingerprints');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_fingerprint()
@@ -23,7 +25,9 @@ class UserFingerprintControllerTest extends TestCase
         $user = User::factory()->create();
         $fingerprintData = ['user_id' => $user->id, 'fingerprint_id' => 12345, 'active' => true];
         $response = $this->postJson('/api/user-fingerprints', $fingerprintData);
-        $response->assertStatus(201)->assertJsonFragment(['fingerprint_id' => 12345]);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.fingerprint_id', 12345);
         $this->assertDatabaseHas('user_fingerprints', ['fingerprint_id' => 12345]);
     }
 
@@ -31,7 +35,10 @@ class UserFingerprintControllerTest extends TestCase
     {
         $fingerprint = UserFingerprint::factory()->create();
         $response = $this->getJson('/api/user-fingerprints/' . $fingerprint->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $fingerprint->id, 'fingerprint_id' => $fingerprint->fingerprint_id]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $fingerprint->id)
+            ->assertJsonPath('data.fingerprint_id', $fingerprint->fingerprint_id);
     }
 
     public function test_can_update_fingerprint()
@@ -39,7 +46,9 @@ class UserFingerprintControllerTest extends TestCase
         $fingerprint = UserFingerprint::factory()->create();
         $updateData = ['active' => false];
         $response = $this->putJson('/api/user-fingerprints/' . $fingerprint->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['active' => false]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.active', false);
         $this->assertDatabaseHas('user_fingerprints', ['id' => $fingerprint->id, 'active' => false]);
     }
 

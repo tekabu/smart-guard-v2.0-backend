@@ -15,14 +15,19 @@ class DeviceControllerTest extends TestCase
     {
         Device::factory()->count(3)->create();
         $response = $this->getJson('/api/devices');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_device()
     {
         $deviceData = ['device_id' => 'DEV-001', 'door_open_duration_seconds' => 5, 'active' => true];
         $response = $this->postJson('/api/devices', $deviceData);
-        $response->assertStatus(201)->assertJsonFragment(['device_id' => 'DEV-001', 'door_open_duration_seconds' => 5]);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.device_id', 'DEV-001')
+            ->assertJsonPath('data.door_open_duration_seconds', 5);
         $this->assertDatabaseHas('devices', ['device_id' => 'DEV-001']);
     }
 
@@ -30,7 +35,10 @@ class DeviceControllerTest extends TestCase
     {
         $device = Device::factory()->create();
         $response = $this->getJson('/api/devices/' . $device->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $device->id, 'device_id' => $device->device_id]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $device->id)
+            ->assertJsonPath('data.device_id', $device->device_id);
     }
 
     public function test_can_update_device()
@@ -38,7 +46,9 @@ class DeviceControllerTest extends TestCase
         $device = Device::factory()->create();
         $updateData = ['door_open_duration_seconds' => 10];
         $response = $this->putJson('/api/devices/' . $device->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['door_open_duration_seconds' => 10]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.door_open_duration_seconds', 10);
         $this->assertDatabaseHas('devices', ['id' => $device->id, 'door_open_duration_seconds' => 10]);
     }
 

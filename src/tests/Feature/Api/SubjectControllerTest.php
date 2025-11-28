@@ -14,14 +14,18 @@ class SubjectControllerTest extends TestCase
     {
         Subject::factory()->count(3)->create();
         $response = $this->getJson('/api/subjects');
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_subject()
     {
         $subjectData = ['subject' => 'Computer Programming', 'active' => true];
         $response = $this->postJson('/api/subjects', $subjectData);
-        $response->assertStatus(201)->assertJsonFragment(['subject' => 'Computer Programming']);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.subject', 'Computer Programming');
         $this->assertDatabaseHas('subjects', ['subject' => 'Computer Programming']);
     }
 
@@ -29,7 +33,10 @@ class SubjectControllerTest extends TestCase
     {
         $subject = Subject::factory()->create();
         $response = $this->getJson('/api/subjects/' . $subject->id);
-        $response->assertStatus(200)->assertJsonFragment(['id' => $subject->id, 'subject' => $subject->subject]);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $subject->id)
+            ->assertJsonPath('data.subject', $subject->subject);
     }
 
     public function test_can_update_subject()
@@ -37,7 +44,9 @@ class SubjectControllerTest extends TestCase
         $subject = Subject::factory()->create();
         $updateData = ['subject' => 'Advanced Programming'];
         $response = $this->putJson('/api/subjects/' . $subject->id, $updateData);
-        $response->assertStatus(200)->assertJsonFragment(['subject' => 'Advanced Programming']);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.subject', 'Advanced Programming');
         $this->assertDatabaseHas('subjects', ['id' => $subject->id, 'subject' => 'Advanced Programming']);
     }
 

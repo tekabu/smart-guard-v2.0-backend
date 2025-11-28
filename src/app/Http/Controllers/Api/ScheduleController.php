@@ -7,7 +7,9 @@ use App\Models\Schedule;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
 
-\n    use ApiResponse;
+class ScheduleController extends Controller
+{
+    use ApiResponse;
 
     public function index()
     {
