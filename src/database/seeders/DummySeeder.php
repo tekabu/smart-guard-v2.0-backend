@@ -34,6 +34,12 @@ class DummySeeder extends Seeder
             UserRfidSeeder::class,
         ]);
 
+        // Seed schedules (requires users, rooms, subjects)
+        $this->call(ScheduleSeeder::class);
+
+        // Seed schedule periods (requires schedules)
+        $this->call(SchedulePeriodSeeder::class);
+
         // Seed logs (requires users, rooms, devices)
         $this->call([
             UserAuditLogSeeder::class,
