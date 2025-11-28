@@ -10,14 +10,23 @@
   ✓ can delete device                                                    0.01s
   ✓ cannot create device with duplicate device id                        0.01s
   ✓ requires device id                                                   0.01s
+  ✓ show device that does not exist                                      0.01s
+  ✓ update device that does not exist                                    0.01s
+  ✓ delete device that does not exist                                    0.01s
+  ✓ update device with duplicate device id                               0.01s
 
    PASS  Tests\Feature\Api\RoomControllerTest
-  ✓ can list rooms                                                       0.01s
+  ✓ can list rooms                                                       0.02s
   ✓ can create room                                                      0.01s
   ✓ can show room                                                        0.01s
   ✓ can update room                                                      0.01s
   ✓ can delete room                                                      0.01s
-  ✓ requires room number                                                 0.01s
+  ✓ requires room number
+  ✓ show room that does not exist
+  ✓ update room that does not exist
+  ✓ delete room that does not exist
+  ✓ cannot create room with duplicate room number                        0.01s
+  ✓ update room with duplicate room number                               0.01s
 
    PASS  Tests\Feature\Api\ScheduleControllerTest
   ✓ can list schedules                                                   0.02s
@@ -27,6 +36,11 @@
   ✓ can delete schedule                                                  0.01s
   ✓ cannot create schedule with invalid day                              0.01s
   ✓ requires all fields                                                  0.01s
+  ✓ show schedule that does not exist                                    0.01s
+  ✓ update schedule that does not exist                                  0.01s
+  ✓ delete schedule that does not exist                                  0.01s
+  ✓ cannot create schedule with duplicate combination                    0.01s
+  ✓ update schedule with duplicate combination                           0.01s
 
    PASS  Tests\Feature\Api\SchedulePeriodControllerTest
   ✓ can list schedule periods                                            0.02s
@@ -35,15 +49,27 @@
   ✓ can update schedule period                                           0.01s
   ✓ can delete schedule period                                           0.01s
   ✓ requires all fields                                                  0.01s
+  ✓ show schedule period that does not exist
+  ✓ update schedule period that does not exist                           0.01s
+  ✓ delete schedule period that does not exist
+  ✓ create schedule period with overlapping time same room same day      0.01s
+  ✓ create schedule period with non overlapping time same room same day  0.01s
+  ✓ create schedule period with overlapping time different room same da… 0.01s
+  ✓ update schedule period with overlapping time                         0.01s
+  ✓ schedule period overlap scenarios                                    0.02s
 
    PASS  Tests\Feature\Api\SubjectControllerTest
-  ✓ can list subjects                                                    0.01s
+  ✓ can list subjects                                                    0.02s
   ✓ can create subject                                                   0.01s
   ✓ can show subject                                                     0.01s
   ✓ can update subject                                                   0.01s
   ✓ can delete subject                                                   0.01s
   ✓ cannot create subject with duplicate name                            0.01s
-  ✓ requires subject                                                     0.01s
+  ✓ requires subject
+  ✓ show subject that does not exist                                     0.01s
+  ✓ update subject that does not exist                                   0.01s
+  ✓ delete subject that does not exist
+  ✓ update subject with duplicate name                                   0.01s
 
    PASS  Tests\Feature\Api\UserAccessLogControllerTest
   ✓ can list access logs                                                 0.02s
@@ -67,32 +93,44 @@
   ✓ can update user                                                      0.01s
   ✓ can delete user                                                      0.01s
   ✓ cannot create user with duplicate email                              0.01s
-  ✓ cannot create user with invalid role
+  ✓ cannot create user with invalid role                                 0.01s
   ✓ requires name email password role                                    0.01s
+  ✓ show user that does not exist                                        0.01s
+  ✓ update user that does not exist                                      0.01s
+  ✓ delete user that does not exist                                      0.01s
+  ✓ update user with duplicate email                                     0.01s
 
    PASS  Tests\Feature\Api\UserFingerprintControllerTest
-  ✓ can list fingerprints                                                0.01s
+  ✓ can list fingerprints                                                0.02s
   ✓ can create fingerprint                                               0.01s
   ✓ can show fingerprint                                                 0.01s
   ✓ can update fingerprint                                               0.01s
   ✓ can delete fingerprint                                               0.01s
   ✓ cannot create fingerprint with duplicate fingerprint id              0.01s
   ✓ requires user id and fingerprint id                                  0.01s
+  ✓ show fingerprint that does not exist
+  ✓ update fingerprint that does not exist                               0.01s
+  ✓ delete fingerprint that does not exist
+  ✓ update fingerprint with duplicate fingerprint id                     0.01s
 
    PASS  Tests\Feature\Api\UserRfidControllerTest
-  ✓ can list rfids                                                       0.02s
-  ✓ can create fingerprint                                               0.01s
-  ✓ can show fingerprint                                                 0.01s
-  ✓ can update fingerprint                                               0.01s
-  ✓ can delete fingerprint                                               0.01s
-  ✓ cannot create fingerprint with duplicate card id                     0.01s
-  ✓ requires user id and card id                                         0.01s
+  ✓ can list rfids                                                       0.01s
+  ✓ can create rfid                                                      0.01s
+  ✓ can show rfid                                                        0.01s
+  ✓ can update rfid                                                      0.01s
+  ✓ can delete rfid                                                      0.01s
+  ✓ cannot create rfid with duplicate card id                            0.01s
+  ✓ requires user id and card id
+  ✓ show rfid that does not exist
+  ✓ update rfid that does not exist
+  ✓ delete rfid that does not exist
+  ✓ update rfid with duplicate card id                                   0.01s
 
    PASS  Tests\Feature\ExampleTest
   ✓ the application returns a successful response                        0.01s
 
-  Tests:    68 passed (196 assertions)
-  Duration: 0.79s
+  Tests:    106 passed (270 assertions)
+  Duration: 1.03s
 
 Device Controller (Tests\Feature\Api\DeviceController)
  [x] Can list devices
@@ -102,6 +140,10 @@ Device Controller (Tests\Feature\Api\DeviceController)
  [x] Can delete device
  [x] Cannot create device with duplicate device id
  [x] Requires device id
+ [x] Show device that does not exist
+ [x] Update device that does not exist
+ [x] Delete device that does not exist
+ [x] Update device with duplicate device id
 
 Example (Tests\Feature\Example)
  [x] The application returns a successful response
@@ -116,6 +158,11 @@ Room Controller (Tests\Feature\Api\RoomController)
  [x] Can update room
  [x] Can delete room
  [x] Requires room number
+ [x] Show room that does not exist
+ [x] Update room that does not exist
+ [x] Delete room that does not exist
+ [x] Cannot create room with duplicate room number
+ [x] Update room with duplicate room number
 
 Schedule Controller (Tests\Feature\Api\ScheduleController)
  [x] Can list schedules
@@ -125,6 +172,11 @@ Schedule Controller (Tests\Feature\Api\ScheduleController)
  [x] Can delete schedule
  [x] Cannot create schedule with invalid day
  [x] Requires all fields
+ [x] Show schedule that does not exist
+ [x] Update schedule that does not exist
+ [x] Delete schedule that does not exist
+ [x] Cannot create schedule with duplicate combination
+ [x] Update schedule with duplicate combination
 
 Schedule Period Controller (Tests\Feature\Api\SchedulePeriodController)
  [x] Can list schedule periods
@@ -133,6 +185,14 @@ Schedule Period Controller (Tests\Feature\Api\SchedulePeriodController)
  [x] Can update schedule period
  [x] Can delete schedule period
  [x] Requires all fields
+ [x] Show schedule period that does not exist
+ [x] Update schedule period that does not exist
+ [x] Delete schedule period that does not exist
+ [x] Create schedule period with overlapping time same room same day
+ [x] Create schedule period with non overlapping time same room same day
+ [x] Create schedule period with overlapping time different room same day
+ [x] Update schedule period with overlapping time
+ [x] Schedule period overlap scenarios
 
 Subject Controller (Tests\Feature\Api\SubjectController)
  [x] Can list subjects
@@ -142,6 +202,10 @@ Subject Controller (Tests\Feature\Api\SubjectController)
  [x] Can delete subject
  [x] Cannot create subject with duplicate name
  [x] Requires subject
+ [x] Show subject that does not exist
+ [x] Update subject that does not exist
+ [x] Delete subject that does not exist
+ [x] Update subject with duplicate name
 
 User Access Log Controller (Tests\Feature\Api\UserAccessLogController)
  [x] Can list access logs
@@ -167,6 +231,10 @@ User Controller (Tests\Feature\Api\UserController)
  [x] Cannot create user with duplicate email
  [x] Cannot create user with invalid role
  [x] Requires name email password role
+ [x] Show user that does not exist
+ [x] Update user that does not exist
+ [x] Delete user that does not exist
+ [x] Update user with duplicate email
 
 User Fingerprint Controller (Tests\Feature\Api\UserFingerprintController)
  [x] Can list fingerprints
@@ -176,17 +244,25 @@ User Fingerprint Controller (Tests\Feature\Api\UserFingerprintController)
  [x] Can delete fingerprint
  [x] Cannot create fingerprint with duplicate fingerprint id
  [x] Requires user id and fingerprint id
+ [x] Show fingerprint that does not exist
+ [x] Update fingerprint that does not exist
+ [x] Delete fingerprint that does not exist
+ [x] Update fingerprint with duplicate fingerprint id
 
 User Rfid Controller (Tests\Feature\Api\UserRfidController)
  [x] Can list rfids
- [x] Can create fingerprint
- [x] Can show fingerprint
- [x] Can update fingerprint
- [x] Can delete fingerprint
- [x] Cannot create fingerprint with duplicate card id
+ [x] Can create rfid
+ [x] Can show rfid
+ [x] Can update rfid
+ [x] Can delete rfid
+ [x] Cannot create rfid with duplicate card id
  [x] Requires user id and card id
+ [x] Show rfid that does not exist
+ [x] Update rfid that does not exist
+ [x] Delete rfid that does not exist
+ [x] Update rfid with duplicate card id
 
 
 ------------------------------------------------------------
-Summary: 68 tests, 68 passed, 0 failed, 100.00% success rate (196 assertions across all tests)
+Summary: 106 tests, 106 passed, 0 failed, 100.00% success rate (270 assertions across all tests)
 ------------------------------------------------------------

@@ -16,6 +16,7 @@ class ScheduleController extends Controller
 
     public function store(Request $request)
     {
+        // Validate basic fields
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'day_of_week' => 'required|in:SUNDAY,MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY',
@@ -23,6 +24,17 @@ class ScheduleController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'active' => 'boolean',
         ]);
+
+        // Check for unique combination: user_id, day_of_week, room_id, subject_id
+        $existing = Schedule::where('user_id', $validated['user_id'])
+                    ->where('day_of_week', $validated['day_of_week'])
+                    ->where('room_id', $validated['room_id'])
+                    ->where('subject_id', $validated['subject_id'])
+                    ->first();
+
+        if ($existing) {
+            return response()->json(['errors' => ['combination' => ['A schedule with the same user, day of week, room, and subject already exists.']]], 422);
+        }
 
         $record = Schedule::create($validated);
         return response()->json($record, 201);
@@ -46,12 +58,25 @@ class ScheduleController extends Controller
             'active' => 'sometimes|boolean',
         ];
 
-        // Replace {id} placeholder in unique rules
-        foreach ($updateRules as $field => $rule) {
-            $updateRules[$field] = str_replace('{id}', $id, $rule);
-        }
-
         $validated = $request->validate($updateRules);
+
+        // Check for unique combination only if any of the key fields are being updated
+        $userId = $validated['user_id'] ?? $record->user_id;
+        $dayOfWeek = $validated['day_of_week'] ?? $record->day_of_week;
+        $roomId = $validated['room_id'] ?? $record->room_id;
+        $subjectId = $validated['subject_id'] ?? $record->subject_id;
+
+        // Check if another schedule already exists with the same combination
+        $existing = Schedule::where('user_id', $userId)
+                    ->where('day_of_week', $dayOfWeek)
+                    ->where('room_id', $roomId)
+                    ->where('subject_id', $subjectId)
+                    ->where('id', '!=', $id)  // Exclude the current record
+                    ->first();
+
+        if ($existing) {
+            return response()->json(['errors' => ['combination' => ['A schedule with the same user, day of week, room, and subject already exists.']]], 422);
+        }
 
         $record->update($validated);
         return response()->json($record);
