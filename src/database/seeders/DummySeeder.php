@@ -27,5 +27,17 @@ class DummySeeder extends Seeder
             UserStudentSeeder::class,
             UserFacultySeeder::class,
         ]);
+
+        // Seed user authentication methods (requires users)
+        $this->call([
+            UserFingerprintSeeder::class,
+            UserRfidSeeder::class,
+        ]);
+
+        // Seed logs (requires users, rooms, devices)
+        $this->call([
+            UserAuditLogSeeder::class,
+            UserAccessLogSeeder::class,
+        ]);
     }
 }
