@@ -4,15 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    use ApiResponse;
+
     public function index()
     {
         $records = User::query()->get();
-        return response()->json($records);
+        return $this->successResponse($records);
     }
 
     public function store(Request $request)
@@ -36,13 +39,13 @@ class UserController extends Controller
         }
 
         $record = User::create($validated);
-        return response()->json($record, 201);
+        return $this->successResponse($record, 201);
     }
 
     public function show(string $id)
     {
         $record = User::query()->findOrFail($id);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function update(Request $request, string $id)
@@ -75,7 +78,7 @@ class UserController extends Controller
         }
 
         $record->update($validated);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function destroy(string $id)

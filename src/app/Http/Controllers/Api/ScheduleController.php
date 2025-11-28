@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
+use App\Traits\ApiResponse;
 
-class ScheduleController extends Controller
-{
+\n    use ApiResponse;
+
     public function index()
     {
         $records = Schedule::query()->with(['user', 'room', 'subject', 'periods'])->get();
-        return response()->json($records);
+        return $this->successResponse($records);
     }
 
     public function store(Request $request)
@@ -33,17 +34,17 @@ class ScheduleController extends Controller
                     ->first();
 
         if ($existing) {
-            return response()->json(['errors' => ['combination' => ['A schedule with the same user, day of week, room, and subject already exists.']]], 422);
+            return $this->errorResponse('A schedule with the same user, day of week, room, and subject already exists.');
         }
 
         $record = Schedule::create($validated);
-        return response()->json($record, 201);
+        return $this->successResponse($record, 201);
     }
 
     public function show(string $id)
     {
         $record = Schedule::query()->with(['user', 'room', 'subject', 'periods'])->findOrFail($id);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function update(Request $request, string $id)
@@ -75,11 +76,11 @@ class ScheduleController extends Controller
                     ->first();
 
         if ($existing) {
-            return response()->json(['errors' => ['combination' => ['A schedule with the same user, day of week, room, and subject already exists.']]], 422);
+            return $this->errorResponse('A schedule with the same user, day of week, room, and subject already exists.');
         }
 
         $record->update($validated);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function destroy(string $id)

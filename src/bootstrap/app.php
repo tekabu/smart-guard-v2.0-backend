@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,5 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Custom validation exception handler
+        $exceptions->render(function (ValidationException $e) {
+            // Get the first error message from the first field
+            $errors = $e->errors();
+            $firstField = array_key_first($errors);
+            $firstError = $errors[$firstField][0] ?? 'Validation failed';
+
+            return response()->json([
+                'status' => false,
+                'message' => $firstError,
+            ], 422);
+        });
     })->create();

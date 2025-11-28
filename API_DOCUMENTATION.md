@@ -25,6 +25,22 @@ docker exec smart-guard-php php artisan route:cache
 
 ## API Endpoints
 
+**Note:** All successful API responses (GET, POST, PUT) are wrapped in a standard format:
+```json
+{
+  "status": true,
+  "data": { ... }  // or [ ... ] for list endpoints
+}
+```
+
+Error responses use:
+```json
+{
+  "status": false,
+  "message": "Error message here"
+}
+```
+
 ### Users
 
 Manage system users (Admin, Staff, Student, Faculty).
@@ -87,24 +103,53 @@ Manage system users (Admin, Staff, Student, Faculty).
 - `email` uniqueness check excludes current user
 - `password` will be hashed if provided
 
-**Response (GET, POST, PUT):**
+**Response (GET single, POST, PUT):**
 ```json
 {
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "role": "STUDENT",
-  "active": true,
-  "student_id": "2024-001",
-  "faculty_id": null,
-  "course": "Computer Science",
-  "year_level": 4,
-  "attendance_rate": "95.50",
-  "department": "Engineering",
-  "last_access_at": null,
-  "email_verified_at": null,
-  "created_at": "2025-11-28T10:00:00.000000Z",
-  "updated_at": "2025-11-28T10:00:00.000000Z"
+  "status": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "STUDENT",
+    "active": true,
+    "student_id": "2024-001",
+    "faculty_id": null,
+    "course": "Computer Science",
+    "year_level": 4,
+    "attendance_rate": "95.50",
+    "department": "Engineering",
+    "last_access_at": null,
+    "email_verified_at": null,
+    "created_at": "2025-11-28T10:00:00.000000Z",
+    "updated_at": "2025-11-28T10:00:00.000000Z"
+  }
+}
+```
+
+**Response (GET list):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "STUDENT",
+      "active": true,
+      "student_id": "2024-001",
+      "faculty_id": null,
+      "course": "Computer Science",
+      "year_level": 4,
+      "attendance_rate": "95.50",
+      "department": "Engineering",
+      "last_access_at": null,
+      "email_verified_at": null,
+      "created_at": "2025-11-28T10:00:00.000000Z",
+      "updated_at": "2025-11-28T10:00:00.000000Z"
+    }
+  ]
 }
 ```
 
@@ -148,21 +193,47 @@ Manage user fingerprint registrations. Includes user relationship data.
 - `fingerprint_id` - optional, integer, must be unique (excludes current record)
 - `active` - optional, boolean
 
-**Response (GET, POST, PUT):**
+**Response (GET single, POST, PUT):**
 ```json
 {
-  "id": 1,
-  "user_id": 1,
-  "fingerprint_id": 12345,
-  "active": true,
-  "created_at": "2025-11-28T10:00:00.000000Z",
-  "updated_at": "2025-11-28T10:00:00.000000Z",
-  "user": {
+  "status": true,
+  "data": {
     "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "STUDENT"
+    "user_id": 1,
+    "fingerprint_id": 12345,
+    "active": true,
+    "created_at": "2025-11-28T10:00:00.000000Z",
+    "updated_at": "2025-11-28T10:00:00.000000Z",
+    "user": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "STUDENT"
+    }
   }
+}
+```
+
+**Response (GET list):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "fingerprint_id": 12345,
+      "active": true,
+      "created_at": "2025-11-28T10:00:00.000000Z",
+      "updated_at": "2025-11-28T10:00:00.000000Z",
+      "user": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "STUDENT"
+      }
+    }
+  ]
 }
 ```
 
@@ -494,11 +565,8 @@ Manage faculty teaching schedules. Includes user, room, subject, and periods rel
 **Error Response (422) - Duplicate Combination:**
 ```json
 {
-  "errors": {
-    "combination": [
-      "A schedule with the same user, day of week, room, and subject already exists."
-    ]
-  }
+  "status": false,
+  "message": "A schedule with the same user, day of week, room, and subject already exists."
 }
 ```
 
@@ -570,11 +638,8 @@ Manage time periods for schedules. Includes schedule relationship and overlap va
 **Error Response (422) - Overlapping Period:**
 ```json
 {
-  "errors": {
-    "start_time": [
-      "The schedule period overlaps with an existing schedule period: 08:00:00 - 09:30:00 on room 1 for day MONDAY."
-    ]
-  }
+  "status": false,
+  "message": "The schedule period overlaps with an existing schedule period: 08:00:00 - 09:30:00 on room 1 for day MONDAY."
 }
 ```
 
@@ -694,25 +759,47 @@ All API responses follow standard JSON format with appropriate HTTP status codes
 
 ### Success Response Examples
 
-**GET/PUT Response (200 OK):**
+**GET Single/PUT Response (200 OK):**
 ```json
 {
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "created_at": "2025-11-28T10:00:00.000000Z",
-  "updated_at": "2025-11-28T10:00:00.000000Z"
+  "status": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "created_at": "2025-11-28T10:00:00.000000Z",
+    "updated_at": "2025-11-28T10:00:00.000000Z"
+  }
+}
+```
+
+**GET List Response (200 OK):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "created_at": "2025-11-28T10:00:00.000000Z",
+      "updated_at": "2025-11-28T10:00:00.000000Z"
+    }
+  ]
 }
 ```
 
 **POST Response (201 Created):**
 ```json
 {
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "created_at": "2025-11-28T10:00:00.000000Z",
-  "updated_at": "2025-11-28T10:00:00.000000Z"
+  "status": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "created_at": "2025-11-28T10:00:00.000000Z",
+    "updated_at": "2025-11-28T10:00:00.000000Z"
+  }
 }
 ```
 
@@ -726,17 +813,12 @@ All API responses follow standard JSON format with appropriate HTTP status codes
 **Validation Error (422 Unprocessable Entity):**
 ```json
 {
-  "message": "The given data was invalid.",
-  "errors": {
-    "email": [
-      "The email has already been taken."
-    ],
-    "password": [
-      "The password must be at least 8 characters."
-    ]
-  }
+  "status": false,
+  "message": "The email has already been taken."
 }
 ```
+
+**Note:** Only the first validation error message is returned. If multiple fields fail validation, only the first error is shown.
 
 **Not Found Error (404 Not Found):**
 ```json
@@ -744,6 +826,8 @@ All API responses follow standard JSON format with appropriate HTTP status codes
   "message": "No query results for model [App\\Models\\User] 999"
 }
 ```
+
+**Note:** 404 Not Found errors maintain Laravel's default format.
 
 ## CORS Configuration
 

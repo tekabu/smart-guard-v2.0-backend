@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Traits\ApiResponse;
 use App\Models\Device;
 use Illuminate\Http\Request;
 
 class DeviceController extends Controller
 {
+    use ApiResponse;
+
     public function index()
     {
         $records = Device::query()->with(['lastAccessedByUser', 'rooms'])->get();
-        return response()->json($records);
+        return $this->successResponse($records);
     }
 
     public function store(Request $request)
@@ -23,13 +26,13 @@ class DeviceController extends Controller
         ]);
 
         $record = Device::create($validated);
-        return response()->json($record, 201);
+        return $this->successResponse($record, 201);
     }
 
     public function show(string $id)
     {
         $record = Device::query()->with(['lastAccessedByUser', 'rooms'])->findOrFail($id);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function update(Request $request, string $id)
@@ -42,7 +45,6 @@ class DeviceController extends Controller
             'active' => 'sometimes|boolean',
         ];
 
-        // Replace {id} placeholder in unique rules
         foreach ($updateRules as $field => $rule) {
             $updateRules[$field] = str_replace('{id}', $id, $rule);
         }
@@ -50,7 +52,7 @@ class DeviceController extends Controller
         $validated = $request->validate($updateRules);
 
         $record->update($validated);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function destroy(string $id)

@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use Illuminate\Http\Request;
+use App\Traits\ApiResponse;
 
-class SubjectController extends Controller
-{
+\n    use ApiResponse;
+
     public function index()
     {
         $records = Subject::query()->get();
-        return response()->json($records);
+        return $this->successResponse($records);
     }
 
     public function store(Request $request)
@@ -22,13 +23,13 @@ class SubjectController extends Controller
         ]);
 
         $record = Subject::create($validated);
-        return response()->json($record, 201);
+        return $this->successResponse($record, 201);
     }
 
     public function show(string $id)
     {
         $record = Subject::query()->findOrFail($id);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function update(Request $request, string $id)
@@ -48,7 +49,7 @@ class SubjectController extends Controller
         $validated = $request->validate($updateRules);
 
         $record->update($validated);
-        return response()->json($record);
+        return $this->successResponse($record);
     }
 
     public function destroy(string $id)
