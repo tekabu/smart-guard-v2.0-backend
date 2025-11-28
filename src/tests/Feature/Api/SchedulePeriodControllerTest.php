@@ -258,7 +258,7 @@ class SchedulePeriodControllerTest extends TestCase
         $response1->assertStatus(201);
         
         // Cleanup: Remove the just-created period so it doesn't interfere with next test
-        $this->deleteJson('/api/schedule-periods/' . $response1->decodeResponseJson()['id']);
+        $this->deleteJson('/api/schedule-periods/' . $response1->decodeResponseJson()['data']['id']);
         
         // New Record, Room1, Monday, assert 14:00:00 to 16:00:00 true (should pass - abuts end time)  
         $periodData2 = [
@@ -270,7 +270,7 @@ class SchedulePeriodControllerTest extends TestCase
         $response2->assertStatus(201);
         
         // Cleanup: Remove the just-created period so it doesn't interfere with next test
-        $this->deleteJson('/api/schedule-periods/' . $response2->decodeResponseJson()['id']);
+        $this->deleteJson('/api/schedule-periods/' . $response2->decodeResponseJson()['data']['id']);
         
         // New Record, Room1, Monday, assert 08:00:00 to 11:00:00 false (should fail - overlaps)
         $periodData3 = [

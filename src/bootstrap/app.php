@@ -18,14 +18,17 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Custom validation exception handler
         $exceptions->render(function (ValidationException $e) {
-            // Get the first error message from the first field
+            // Get all validation errors
             $errors = $e->errors();
+
+            // Get the first error message for the message field
             $firstField = array_key_first($errors);
             $firstError = $errors[$firstField][0] ?? 'Validation failed';
 
             return response()->json([
                 'status' => false,
                 'message' => $firstError,
+                'errors' => $errors,
             ], 422);
         });
     })->create();

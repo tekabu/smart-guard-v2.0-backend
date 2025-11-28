@@ -36,7 +36,7 @@ class ScheduleController extends Controller
                     ->first();
 
         if ($existing) {
-            return $this->errorResponse('A schedule with the same user, day of week, room, and subject already exists.');
+            return $this->validationErrorResponse('combination', 'A schedule with the same user, day of week, room, and subject already exists.');
         }
 
         $record = Schedule::create($validated);
@@ -76,9 +76,8 @@ class ScheduleController extends Controller
                     ->where('subject_id', $subjectId)
                     ->where('id', '!=', $id)  // Exclude the current record
                     ->first();
-
         if ($existing) {
-            return $this->errorResponse('A schedule with the same user, day of week, room, and subject already exists.');
+            return $this->validationErrorResponse('combination', 'A schedule with the same user, day of week, room, and subject already exists.');
         }
 
         $record->update($validated);
