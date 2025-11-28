@@ -17,7 +17,7 @@ class RoomController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'room_number' => 'required|string',
+            'room_number' => 'required|string|unique:rooms,room_number',
             'device_id' => 'nullable|exists:devices,id',
             'active' => 'boolean',
         ]);
@@ -37,7 +37,7 @@ class RoomController extends Controller
         $record = Room::findOrFail($id);
 
         $updateRules = [
-            'room_number' => 'sometimes|string',
+            'room_number' => 'sometimes|string|unique:rooms,room_number,{id}',
             'device_id' => 'nullable|exists:devices,id',
             'active' => 'sometimes|boolean',
         ];

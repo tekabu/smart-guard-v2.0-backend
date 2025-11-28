@@ -14,55 +14,86 @@ class UserFingerprintControllerTest extends TestCase
     public function test_can_list_fingerprints()
     {
         UserFingerprint::factory()->count(3)->create();
-        $response = $this->getJson("/api/user-fingerprints");
+        $response = $this->getJson('/api/user-fingerprints');
         $response->assertStatus(200)->assertJsonCount(3);
     }
 
     public function test_can_create_fingerprint()
     {
         $user = User::factory()->create();
-        $fingerprintData = ["user_id" => $user->id, "fingerprint_id" => 12345, "active" => true];
-        $response = $this->postJson("/api/user-fingerprints", $fingerprintData);
-        $response->assertStatus(201)->assertJsonFragment(["fingerprint_id" => 12345]);
-        $this->assertDatabaseHas("user_fingerprints", ["fingerprint_id" => 12345]);
+        $fingerprintData = ['user_id' => $user->id, 'fingerprint_id' => 12345, 'active' => true];
+        $response = $this->postJson('/api/user-fingerprints', $fingerprintData);
+        $response->assertStatus(201)->assertJsonFragment(['fingerprint_id' => 12345]);
+        $this->assertDatabaseHas('user_fingerprints', ['fingerprint_id' => 12345]);
     }
 
     public function test_can_show_fingerprint()
     {
         $fingerprint = UserFingerprint::factory()->create();
-        $response = $this->getJson("/api/user-fingerprints/{$fingerprint->id}");
-        $response->assertStatus(200)->assertJsonFragment(["id" => $fingerprint->id, "fingerprint_id" => $fingerprint->fingerprint_id]);
+        $response = $this->getJson('/api/user-fingerprints/' . $fingerprint->id);
+        $response->assertStatus(200)->assertJsonFragment(['id' => $fingerprint->id, 'fingerprint_id' => $fingerprint->fingerprint_id]);
     }
 
     public function test_can_update_fingerprint()
     {
         $fingerprint = UserFingerprint::factory()->create();
-        $updateData = ["active" => false];
-        $response = $this->putJson("/api/user-fingerprints/{$fingerprint->id}", $updateData);
-        $response->assertStatus(200)->assertJsonFragment(["active" => false]);
-        $this->assertDatabaseHas("user_fingerprints", ["id" => $fingerprint->id, "active" => false]);
+        $updateData = ['active' => false];
+        $response = $this->putJson('/api/user-fingerprints/' . $fingerprint->id, $updateData);
+        $response->assertStatus(200)->assertJsonFragment(['active' => false]);
+        $this->assertDatabaseHas('user_fingerprints', ['id' => $fingerprint->id, 'active' => false]);
     }
 
     public function test_can_delete_fingerprint()
     {
         $fingerprint = UserFingerprint::factory()->create();
-        $response = $this->deleteJson("/api/user-fingerprints/{$fingerprint->id}");
+        $response = $this->deleteJson('/api/user-fingerprints/' . $fingerprint->id);
         $response->assertStatus(204);
-        $this->assertDatabaseMissing("user_fingerprints", ["id" => $fingerprint->id]);
+        $this->assertDatabaseMissing('user_fingerprints', ['id' => $fingerprint->id]);
     }
 
     public function test_cannot_create_fingerprint_with_duplicate_fingerprint_id()
     {
         $user = User::factory()->create();
-        UserFingerprint::factory()->create(["fingerprint_id" => 12345]);
-        $fingerprintData = ["user_id" => $user->id, "fingerprint_id" => 12345];
-        $response = $this->postJson("/api/user-fingerprints", $fingerprintData);
-        $response->assertStatus(422)->assertJsonValidationErrors(["fingerprint_id"]);
+        UserFingerprint::factory()->create(['fingerprint_id' => 12345]);
+        $fingerprintData = ['user_id' => $user->id, 'fingerprint_id' => 12345];
+        $response = $this->postJson('/api/user-fingerprints', $fingerprintData);
+        $response->assertStatus(422)->assertJsonValidationErrors(['fingerprint_id']);
     }
 
     public function test_requires_user_id_and_fingerprint_id()
     {
-        $response = $this->postJson("/api/user-fingerprints", []);
-        $response->assertStatus(422)->assertJsonValidationErrors(["user_id", "fingerprint_id"]);
+        $response = $this->postJson('/api/user-fingerprints', []);
+        $response->assertStatus(422)->assertJsonValidationErrors(['user_id', 'fingerprint_id']);
+    }
+
+    public function test_show_fingerprint_that_does_not_exist()
+    {
+        $response = $this->getJson('/api/user-fingerprints/99999');
+        $response->assertStatus(404);
+    }
+
+    public function test_update_fingerprint_that_does_not_exist()
+    {
+        $updateData = ['active' => false];
+        $response = $this->putJson('/api/user-fingerprints/99999', $updateData);
+        $response->assertStatus(404);
+    }
+
+    public function test_delete_fingerprint_that_does_not_exist()
+    {
+        $response = $this->deleteJson('/api/user-fingerprints/99999');
+        $response->assertStatus(404);
+    }
+
+    public function test_update_fingerprint_with_duplicate_fingerprint_id()
+    {
+        $user = User::factory()->create();
+        $fingerprint1 = UserFingerprint::factory()->create(['fingerprint_id' => 11111]);
+        $fingerprint2 = UserFingerprint::factory()->create(['fingerprint_id' => 22222]);
+        
+        // Try to update fingerprint1 to use fingerprint2's fingerprint_id (which already exists)
+        $updateData = ['fingerprint_id' => 22222];
+        $response = $this->putJson('/api/user-fingerprints/' . $fingerprint1->id, $updateData);
+        $response->assertStatus(422)->assertJsonValidationErrors(['fingerprint_id']);
     }
 }

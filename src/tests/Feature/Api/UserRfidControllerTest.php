@@ -14,55 +14,86 @@ class UserRfidControllerTest extends TestCase
     public function test_can_list_rfids()
     {
         UserRfid::factory()->count(3)->create();
-        $response = $this->getJson("/api/user-rfids");
+        $response = $this->getJson('/api/user-rfids');
         $response->assertStatus(200)->assertJsonCount(3);
     }
 
-    public function test_can_create_fingerprint()
+    public function test_can_create_rfid()
     {
         $user = User::factory()->create();
-        $fingerprintData = ["user_id" => $user->id, "card_id" => "ABC123", "active" => true];
-        $response = $this->postJson("/api/user-rfids", $fingerprintData);
-        $response->assertStatus(201)->assertJsonFragment(["card_id" => "ABC123"]);
-        $this->assertDatabaseHas("user_rfids", ["card_id" => "ABC123"]);
+        $rfidData = ['user_id' => $user->id, 'card_id' => 'ABC123', 'active' => true];
+        $response = $this->postJson('/api/user-rfids', $rfidData);
+        $response->assertStatus(201)->assertJsonFragment(['card_id' => 'ABC123']);
+        $this->assertDatabaseHas('user_rfids', ['card_id' => 'ABC123']);
     }
 
-    public function test_can_show_fingerprint()
+    public function test_can_show_rfid()
     {
-        $fingerprint = UserRfid::factory()->create();
-        $response = $this->getJson("/api/user-rfids/{$fingerprint->id}");
-        $response->assertStatus(200)->assertJsonFragment(["id" => $fingerprint->id, "card_id" => $fingerprint->card_id]);
+        $rfid = UserRfid::factory()->create();
+        $response = $this->getJson('/api/user-rfids/' . $rfid->id);
+        $response->assertStatus(200)->assertJsonFragment(['id' => $rfid->id, 'card_id' => $rfid->card_id]);
     }
 
-    public function test_can_update_fingerprint()
+    public function test_can_update_rfid()
     {
-        $fingerprint = UserRfid::factory()->create();
-        $updateData = ["active" => false];
-        $response = $this->putJson("/api/user-rfids/{$fingerprint->id}", $updateData);
-        $response->assertStatus(200)->assertJsonFragment(["active" => false]);
-        $this->assertDatabaseHas("user_rfids", ["id" => $fingerprint->id, "active" => false]);
+        $rfid = UserRfid::factory()->create();
+        $updateData = ['active' => false];
+        $response = $this->putJson('/api/user-rfids/' . $rfid->id, $updateData);
+        $response->assertStatus(200)->assertJsonFragment(['active' => false]);
+        $this->assertDatabaseHas('user_rfids', ['id' => $rfid->id, 'active' => false]);
     }
 
-    public function test_can_delete_fingerprint()
+    public function test_can_delete_rfid()
     {
-        $fingerprint = UserRfid::factory()->create();
-        $response = $this->deleteJson("/api/user-rfids/{$fingerprint->id}");
+        $rfid = UserRfid::factory()->create();
+        $response = $this->deleteJson('/api/user-rfids/' . $rfid->id);
         $response->assertStatus(204);
-        $this->assertDatabaseMissing("user_rfids", ["id" => $fingerprint->id]);
+        $this->assertDatabaseMissing('user_rfids', ['id' => $rfid->id]);
     }
 
-    public function test_cannot_create_fingerprint_with_duplicate_card_id()
+    public function test_cannot_create_rfid_with_duplicate_card_id()
     {
         $user = User::factory()->create();
-        UserRfid::factory()->create(["card_id" => "ABC123"]);
-        $fingerprintData = ["user_id" => $user->id, "card_id" => "ABC123"];
-        $response = $this->postJson("/api/user-rfids", $fingerprintData);
-        $response->assertStatus(422)->assertJsonValidationErrors(["card_id"]);
+        UserRfid::factory()->create(['card_id' => 'ABC123']);
+        $rfidData = ['user_id' => $user->id, 'card_id' => 'ABC123'];
+        $response = $this->postJson('/api/user-rfids', $rfidData);
+        $response->assertStatus(422)->assertJsonValidationErrors(['card_id']);
     }
 
     public function test_requires_user_id_and_card_id()
     {
-        $response = $this->postJson("/api/user-rfids", []);
-        $response->assertStatus(422)->assertJsonValidationErrors(["user_id", "card_id"]);
+        $response = $this->postJson('/api/user-rfids', []);
+        $response->assertStatus(422)->assertJsonValidationErrors(['user_id', 'card_id']);
+    }
+
+    public function test_show_rfid_that_does_not_exist()
+    {
+        $response = $this->getJson('/api/user-rfids/99999');
+        $response->assertStatus(404);
+    }
+
+    public function test_update_rfid_that_does_not_exist()
+    {
+        $updateData = ['active' => false];
+        $response = $this->putJson('/api/user-rfids/99999', $updateData);
+        $response->assertStatus(404);
+    }
+
+    public function test_delete_rfid_that_does_not_exist()
+    {
+        $response = $this->deleteJson('/api/user-rfids/99999');
+        $response->assertStatus(404);
+    }
+
+    public function test_update_rfid_with_duplicate_card_id()
+    {
+        $user = User::factory()->create();
+        $rfid1 = UserRfid::factory()->create(['card_id' => 'RFID001']);
+        $rfid2 = UserRfid::factory()->create(['card_id' => 'RFID002']);
+        
+        // Try to update rfid1 to use rfid2's card_id (which already exists)
+        $updateData = ['card_id' => 'RFID002'];
+        $response = $this->putJson('/api/user-rfids/' . $rfid1->id, $updateData);
+        $response->assertStatus(422)->assertJsonValidationErrors(['card_id']);
     }
 }

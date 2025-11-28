@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SchedulePeriod;
+use App\Rules\NoScheduleOverlap;
 use Illuminate\Http\Request;
 
 class SchedulePeriodController extends Controller
@@ -18,8 +19,8 @@ class SchedulePeriodController extends Controller
     {
         $validated = $request->validate([
             'schedule_id' => 'required|exists:schedules,id',
-            'start_time' => 'required|date_format:H:i:s',
-            'end_time' => 'required|date_format:H:i:s|after:start_time',
+            'start_time' => ['required', 'date_format:H:i:s', new NoScheduleOverlap],
+            'end_time' => ['required', 'date_format:H:i:s', 'after:start_time', new NoScheduleOverlap],
             'active' => 'boolean',
         ]);
 
@@ -39,15 +40,13 @@ class SchedulePeriodController extends Controller
 
         $updateRules = [
             'schedule_id' => 'sometimes|exists:schedules,id',
-            'start_time' => 'sometimes|date_format:H:i:s',
-            'end_time' => 'sometimes|date_format:H:i:s|after:start_time',
+            'start_time' => ['sometimes', 'date_format:H:i:s', new NoScheduleOverlap($id, $record->schedule_id)],
+            'end_time' => ['sometimes', 'date_format:H:i:s', 'after:start_time', new NoScheduleOverlap($id, $record->schedule_id)],
             'active' => 'sometimes|boolean',
         ];
 
-        // Replace {id} placeholder in unique rules
-        foreach ($updateRules as $field => $rule) {
-            $updateRules[$field] = str_replace('{id}', $id, $rule);
-        }
+        // We don't need to replace {id} in rules that contain objects, only in string rules
+        // So we'll reconstruct the rules without str_replace since we're using objects now
 
         $validated = $request->validate($updateRules);
 
