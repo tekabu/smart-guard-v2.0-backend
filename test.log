@@ -3,7 +3,7 @@
   ✓ that true is true
 
    PASS  Tests\Feature\Api\DeviceControllerTest
-  ✓ can list devices                                                     0.15s
+  ✓ can list devices                                                     0.19s
   ✓ can create device                                                    0.01s
   ✓ can show device                                                      0.01s
   ✓ can update device                                                    0.01s
@@ -21,10 +21,10 @@
   ✓ can show room                                                        0.01s
   ✓ can update room                                                      0.01s
   ✓ can delete room                                                      0.01s
-  ✓ requires room number
-  ✓ show room that does not exist
-  ✓ update room that does not exist
-  ✓ delete room that does not exist
+  ✓ requires room number                                                 0.01s
+  ✓ show room that does not exist                                        0.01s
+  ✓ update room that does not exist                                      0.01s
+  ✓ delete room that does not exist                                      0.01s
   ✓ cannot create room with duplicate room number                        0.01s
   ✓ update room with duplicate room number                               0.01s
 
@@ -49,9 +49,9 @@
   ✓ can update schedule period                                           0.01s
   ✓ can delete schedule period                                           0.01s
   ✓ requires all fields                                                  0.01s
-  ✓ show schedule period that does not exist
+  ✓ show schedule period that does not exist                             0.01s
   ✓ update schedule period that does not exist                           0.01s
-  ✓ delete schedule period that does not exist
+  ✓ delete schedule period that does not exist                           0.01s
   ✓ create schedule period with overlapping time same room same day      0.01s
   ✓ create schedule period with non overlapping time same room same day  0.01s
   ✓ create schedule period with overlapping time different room same da… 0.01s
@@ -59,7 +59,7 @@
   ✓ schedule period overlap scenarios                                    0.02s
 
    PASS  Tests\Feature\Api\SubjectControllerTest
-  ✓ can list subjects                                                    0.02s
+  ✓ can list subjects                                                    0.01s
   ✓ can create subject                                                   0.01s
   ✓ can show subject                                                     0.01s
   ✓ can update subject                                                   0.01s
@@ -122,15 +122,15 @@
   ✓ cannot create rfid with duplicate card id                            0.01s
   ✓ requires user id and card id
   ✓ show rfid that does not exist
-  ✓ update rfid that does not exist
-  ✓ delete rfid that does not exist
+  ✓ update rfid that does not exist                                      0.01s
+  ✓ delete rfid that does not exist                                      0.01s
   ✓ update rfid with duplicate card id                                   0.01s
 
    PASS  Tests\Feature\ExampleTest
-  ✓ the application returns a successful response                        0.01s
+  ✓ the application returns a successful response                        0.02s
 
   Tests:    106 passed (270 assertions)
-  Duration: 1.03s
+  Duration: 1.14s
 
 Device Controller (Tests\Feature\Api\DeviceController)
  [x] Can list devices
