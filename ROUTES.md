@@ -2,17 +2,9 @@
 
 ## Public Routes
 POST /auth/login
-POST /auth/test-logout
 
 ## Token Management
 POST /logout
-POST /logout-all
-POST /refresh
-
-## Authenticated Routes (api_token, throttle:60,1)
-GET /user
-PUT /user
-PUT /user/password
 
 ## CRUD Resources
 GET /users
@@ -73,16 +65,8 @@ POST /user-audit-logs
 GET /user-audit-logs/{id}
 DELETE /user-audit-logs/{id}
 
-## Admin/Staff Routes (role:admin,staff)
 GET /device-boards
 POST /device-boards
 GET /device-boards/{id}
 PUT /device-boards/{id}
 DELETE /device-boards/{id}
-POST /device-boards/{id}/generate-token
-
-## Device Routes
-POST /device-boards/heartbeat (throttle:1000,1)
-
-## Fallback
-Any unmatched route -> 404
