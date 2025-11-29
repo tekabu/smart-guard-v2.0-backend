@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Traits\ApiResponse;
 use App\Models\DeviceBoard;
-use App\Models\UserAuditLog;
 use Illuminate\Http\Request;
 
 class DeviceBoardController extends Controller
@@ -78,71 +77,5 @@ class DeviceBoardController extends Controller
         $record = DeviceBoard::findOrFail($id);
         $record->delete();
         return response()->json(null, 204);
-    }
-
-    /**
-     * Generate API token for a device board
-     */
-    public function generateToken(Request $request, string $id)
-    {
-        $validated = $request->validate([
-            'token_name' => 'required|string|max:255',
-        ]);
-
-        $board = DeviceBoard::findOrFail($id);
-        
-        // Revoke previous tokens for this board (security measure)
-        $board->tokens()->delete();
-
-        // Generate longer-lived token for ESP32 devices (30 days)
-        $token = $board->createToken($validated['token_name'], ['*'], now()->addDays(30))->plainTextToken;
-
-        // Log token generation for audit
-        $user = $request->user();
-        UserAuditLog::create([
-            'user_id' => $user ? $user->id : null,
-            'description' => "Generated ESP32 token for device board: {$board->id}",
-        ]);
-
-        return $this->successResponse([
-            'board' => $board,
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'expires_at' => now()->addDays(30),
-            'capabilities' => [
-                'heartbeat' => 'POST /api/device-boards/heartbeat',
-                'access_control' => 'Door access operations'
-            ],
-            'message' => 'Token generated successfully. Store this token securely as it will not be shown again.',
-        ]);
-    }
-
-    /**
-     * Update last_seen_at timestamp (called by ESP32 heartbeat)
-     */
-    public function heartbeat(Request $request)
-    {
-        // The authenticated board (via Sanctum token)
-        $board = $request->user();
-
-        if (!$board instanceof DeviceBoard) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid authentication. Device board token required.',
-            ], 401);
-        }
-
-        // Update last seen and log heartbeat
-        $board->update([
-            'last_seen_at' => now(),
-            'last_ip' => $request->ip(),
-        ]);
-
-        return $this->successResponse([
-            'message' => 'Heartbeat received',
-            'id' => $board->id,
-            'last_seen_at' => $board->last_seen_at->toDateTimeString(),
-            'server_time' => now()->toDateTimeString(),
-        ]);
     }
 }

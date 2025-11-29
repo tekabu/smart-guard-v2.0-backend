@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SchedulePeriodController;
 use App\Http\Controllers\Api\UserAccessLogController;
 use App\Http\Controllers\Api\UserAuditLogController;
+use App\Http\Controllers\Api\DeviceBoardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,9 @@ Route::apiResource("user-rfids", UserRfidController::class);
 
 // Devices API
 Route::apiResource("devices", DeviceController::class);
+
+// Device Boards API
+Route::apiResource("device-boards", DeviceBoardController::class);
 
 // Rooms API
 Route::apiResource("rooms", RoomController::class);
