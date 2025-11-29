@@ -12,9 +12,15 @@ class UserController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function index(Request $request)
     {
-        $records = User::query()->get();
+        $query = User::query();
+        
+        if ($request->has('role')) {
+            $query->where('role', $request->get('role'));
+        }
+        
+        $records = $query->get();
         return $this->successResponse($records);
     }
 

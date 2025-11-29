@@ -13,8 +13,9 @@ class UserAuditLogControllerTest extends TestCase
 
     public function test_can_list_audit_logs()
     {
+        $user = User::factory()->create(); // Acting user
         UserAuditLog::factory()->count(3)->create();
-        $response = $this->getJson("/api/user-audit-logs");
+        $response = $this->actingAs($user)->getJson("/api/user-audit-logs");
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonCount(3, 'data');
@@ -22,13 +23,14 @@ class UserAuditLogControllerTest extends TestCase
 
     public function test_can_create_audit_log()
     {
+        $authUser = User::factory()->create(); // Acting user
         $user = User::factory()->create();
         $logData = [
             "user_id" => $user->id,
             "description" => "User logged in from web portal"
         ];
 
-        $response = $this->postJson("/api/user-audit-logs", $logData);
+        $response = $this->actingAs($authUser)->postJson("/api/user-audit-logs", $logData);
         $response->assertStatus(201)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonPath('data.description', 'User logged in from web portal');
@@ -37,8 +39,9 @@ class UserAuditLogControllerTest extends TestCase
 
     public function test_can_show_audit_log()
     {
+        $user = User::factory()->create(); // Acting user
         $log = UserAuditLog::factory()->create();
-        $response = $this->getJson("/api/user-audit-logs/{$log->id}");
+        $response = $this->actingAs($user)->getJson("/api/user-audit-logs/{$log->id}");
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonPath('data.id', $log->id);
@@ -46,15 +49,17 @@ class UserAuditLogControllerTest extends TestCase
 
     public function test_can_delete_audit_log()
     {
+        $user = User::factory()->create(); // Acting user
         $log = UserAuditLog::factory()->create();
-        $response = $this->deleteJson("/api/user-audit-logs/{$log->id}");
+        $response = $this->actingAs($user)->deleteJson("/api/user-audit-logs/{$log->id}");
         $response->assertStatus(204);
         $this->assertDatabaseMissing("user_audit_logs", ["id" => $log->id]);
     }
 
     public function test_requires_user_id_and_description()
     {
-        $response = $this->postJson("/api/user-audit-logs", []);
+        $user = User::factory()->create(); // Acting user
+        $response = $this->actingAs($user)->postJson("/api/user-audit-logs", []);
         $response->assertStatus(422)->assertJsonValidationErrors(["user_id", "description"]);
     }
 }

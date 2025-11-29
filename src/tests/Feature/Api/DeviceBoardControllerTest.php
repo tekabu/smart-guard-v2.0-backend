@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Device;
 use App\Models\DeviceBoard;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,9 +14,10 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_can_list_device_boards()
     {
+        $user = User::factory()->create(); // Acting user
         DeviceBoard::factory()->count(3)->create();
         
-        $response = $this->getJson('/api/device-boards');
+        $response = $this->actingAs($user)->getJson('/api/device-boards');
         
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
@@ -24,6 +26,7 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_can_list_device_boards_with_filters()
     {
+        $user = User::factory()->create(); // Acting user
         $device1 = Device::factory()->create();
         $device2 = Device::factory()->create();
         
@@ -32,23 +35,24 @@ class DeviceBoardControllerTest extends TestCase
         DeviceBoard::factory()->create(['device_id' => $device1->id, 'board_type' => 'LOCK', 'active' => true]);
         
         // Filter by device_id
-        $response = $this->getJson('/api/device-boards?device_id=' . $device1->id);
+        $response = $this->actingAs($user)->getJson('/api/device-boards?device_id=' . $device1->id);
         $response->assertStatus(200)->assertJsonCount(2, 'data');
         
         // Filter by board_type
-        $response = $this->getJson('/api/device-boards?board_type=FINGERPRINT');
+        $response = $this->actingAs($user)->getJson('/api/device-boards?board_type=FINGERPRINT');
         $response->assertStatus(200)->assertJsonCount(1, 'data');
         
         // Filter by active status
-        $response = $this->getJson('/api/device-boards?active=true');
+        $response = $this->actingAs($user)->getJson('/api/device-boards?active=true');
         $response->assertStatus(200)->assertJsonCount(2, 'data');
         
-        $response = $this->getJson('/api/device-boards?active=false');
+        $response = $this->actingAs($user)->getJson('/api/device-boards?active=false');
         $response->assertStatus(200)->assertJsonCount(1, 'data');
     }
 
     public function test_can_create_device_board()
     {
+        $user = User::factory()->create(); // Acting user
         $device = Device::factory()->create();
         
         $boardData = [
@@ -59,7 +63,7 @@ class DeviceBoardControllerTest extends TestCase
             'active' => true,
         ];
         
-        $response = $this->postJson('/api/device-boards', $boardData);
+        $response = $this->actingAs($user)->postJson('/api/device-boards', $boardData);
         
         $response->assertStatus(201)
             ->assertJsonStructure(['status', 'data'])
@@ -72,6 +76,7 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_cannot_create_device_board_with_invalid_board_type()
     {
+        $user = User::factory()->create(); // Acting user
         $device = Device::factory()->create();
         
         $boardData = [
@@ -80,13 +85,14 @@ class DeviceBoardControllerTest extends TestCase
             'mac_address' => 'AA:BB:CC:DD:EE:FF',
         ];
         
-        $response = $this->postJson('/api/device-boards', $boardData);
+        $response = $this->actingAs($user)->postJson('/api/device-boards', $boardData);
         
         $response->assertStatus(422)->assertJsonValidationErrors(['board_type']);
     }
 
     public function test_cannot_create_device_board_with_duplicate_mac_address()
     {
+        $user = User::factory()->create(); // Acting user
         $device = Device::factory()->create();
         DeviceBoard::factory()->create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);
         
@@ -96,14 +102,15 @@ class DeviceBoardControllerTest extends TestCase
             'mac_address' => 'AA:BB:CC:DD:EE:FF',
         ];
         
-        $response = $this->postJson('/api/device-boards', $boardData);
+        $response = $this->actingAs($user)->postJson('/api/device-boards', $boardData);
         
         $response->assertStatus(422)->assertJsonValidationErrors(['mac_address']);
     }
 
     public function test_requires_device_id_and_board_type_and_mac_address()
     {
-        $response = $this->postJson('/api/device-boards', []);
+        $user = User::factory()->create(); // Acting user
+        $response = $this->actingAs($user)->postJson('/api/device-boards', []);
         
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['device_id', 'board_type', 'mac_address']);
@@ -111,9 +118,10 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_can_show_device_board()
     {
+        $user = User::factory()->create(); // Acting user
         $board = DeviceBoard::factory()->create();
         
-        $response = $this->getJson('/api/device-boards/' . $board->id);
+        $response = $this->actingAs($user)->getJson('/api/device-boards/' . $board->id);
         
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
@@ -123,9 +131,10 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_show_device_board_includes_device()
     {
+        $user = User::factory()->create(); // Acting user
         $board = DeviceBoard::factory()->create();
         
-        $response = $this->getJson('/api/device-boards/' . $board->id);
+        $response = $this->actingAs($user)->getJson('/api/device-boards/' . $board->id);
         
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
@@ -135,13 +144,15 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_show_device_board_that_does_not_exist()
     {
-        $response = $this->getJson('/api/device-boards/99999');
+        $user = User::factory()->create(); // Acting user
+        $response = $this->actingAs($user)->getJson('/api/device-boards/99999');
         
         $response->assertStatus(404);
     }
 
     public function test_can_update_device_board()
     {
+        $user = User::factory()->create(); // Acting user
         $board = DeviceBoard::factory()->create(['board_type' => 'FINGERPRINT', 'active' => true]);
         $newDevice = Device::factory()->create();
         
@@ -152,7 +163,7 @@ class DeviceBoardControllerTest extends TestCase
             'firmware_version' => 'v2.0.0',
         ];
         
-        $response = $this->putJson('/api/device-boards/' . $board->id, $updateData);
+        $response = $this->actingAs($user)->putJson('/api/device-boards/' . $board->id, $updateData);
         
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
@@ -172,29 +183,32 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_update_device_board_with_duplicate_mac_address()
     {
+        $user = User::factory()->create(); // Acting user
         $board1 = DeviceBoard::factory()->create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);
         $board2 = DeviceBoard::factory()->create(['mac_address' => '11:22:33:44:55:66']);
         
         // Try to update board2 to use board1's MAC address
         $updateData = ['mac_address' => 'AA:BB:CC:DD:EE:FF'];
-        $response = $this->putJson('/api/device-boards/' . $board2->id, $updateData);
+        $response = $this->actingAs($user)->putJson('/api/device-boards/' . $board2->id, $updateData);
         
         $response->assertStatus(422)->assertJsonValidationErrors(['mac_address']);
     }
 
     public function test_update_device_board_that_does_not_exist()
     {
+        $user = User::factory()->create(); // Acting user
         $updateData = ['board_type' => 'RFID'];
-        $response = $this->putJson('/api/device-boards/99999', $updateData);
+        $response = $this->actingAs($user)->putJson('/api/device-boards/99999', $updateData);
         
         $response->assertStatus(404);
     }
 
     public function test_can_delete_device_board()
     {
+        $user = User::factory()->create(); // Acting user
         $board = DeviceBoard::factory()->create();
         
-        $response = $this->deleteJson('/api/device-boards/' . $board->id);
+        $response = $this->actingAs($user)->deleteJson('/api/device-boards/' . $board->id);
         
         $response->assertStatus(204);
         $this->assertDatabaseMissing('device_boards', ['id' => $board->id]);
@@ -202,7 +216,8 @@ class DeviceBoardControllerTest extends TestCase
 
     public function test_delete_device_board_that_does_not_exist()
     {
-        $response = $this->deleteJson('/api/device-boards/99999');
+        $user = User::factory()->create(); // Acting user
+        $response = $this->actingAs($user)->deleteJson('/api/device-boards/99999');
         
         $response->assertStatus(404);
     }

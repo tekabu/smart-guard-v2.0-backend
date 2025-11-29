@@ -15,8 +15,9 @@ class UserAccessLogControllerTest extends TestCase
 
     public function test_can_list_access_logs()
     {
+        $user = User::factory()->create(); // Acting user
         UserAccessLog::factory()->count(3)->create();
-        $response = $this->getJson("/api/user-access-logs");
+        $response = $this->actingAs($user)->getJson("/api/user-access-logs");
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonCount(3, 'data');
@@ -24,6 +25,7 @@ class UserAccessLogControllerTest extends TestCase
 
     public function test_can_create_access_log()
     {
+        $authUser = User::factory()->create(); // Acting user
         $user = User::factory()->create();
         $room = Room::factory()->create();
         $device = Device::factory()->create();
@@ -35,7 +37,7 @@ class UserAccessLogControllerTest extends TestCase
             "access_used" => "FINGERPRINT"
         ];
 
-        $response = $this->postJson("/api/user-access-logs", $logData);
+        $response = $this->actingAs($authUser)->postJson("/api/user-access-logs", $logData);
         $response->assertStatus(201)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonPath('data.access_used', 'FINGERPRINT');
@@ -44,8 +46,9 @@ class UserAccessLogControllerTest extends TestCase
 
     public function test_can_show_access_log()
     {
+        $user = User::factory()->create(); // Acting user
         $log = UserAccessLog::factory()->create();
-        $response = $this->getJson("/api/user-access-logs/{$log->id}");
+        $response = $this->actingAs($user)->getJson("/api/user-access-logs/{$log->id}");
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonPath('data.id', $log->id);
@@ -53,14 +56,16 @@ class UserAccessLogControllerTest extends TestCase
 
     public function test_can_delete_access_log()
     {
+        $user = User::factory()->create(); // Acting user
         $log = UserAccessLog::factory()->create();
-        $response = $this->deleteJson("/api/user-access-logs/{$log->id}");
+        $response = $this->actingAs($user)->deleteJson("/api/user-access-logs/{$log->id}");
         $response->assertStatus(204);
         $this->assertDatabaseMissing("user_access_logs", ["id" => $log->id]);
     }
 
     public function test_cannot_create_log_with_invalid_access_method()
     {
+        $authUser = User::factory()->create(); // Acting user
         $user = User::factory()->create();
         $room = Room::factory()->create();
         $device = Device::factory()->create();
@@ -72,13 +77,14 @@ class UserAccessLogControllerTest extends TestCase
             "access_used" => "INVALID_METHOD"
         ];
         
-        $response = $this->postJson("/api/user-access-logs", $logData);
+        $response = $this->actingAs($authUser)->postJson("/api/user-access-logs", $logData);
         $response->assertStatus(422)->assertJsonValidationErrors(["access_used"]);
     }
 
     public function test_requires_all_fields()
     {
-        $response = $this->postJson("/api/user-access-logs", []);
+        $user = User::factory()->create(); // Acting user
+        $response = $this->actingAs($user)->postJson("/api/user-access-logs", []);
         $response->assertStatus(422)->assertJsonValidationErrors(["user_id", "room_id", "device_id", "access_used"]);
     }
 }
