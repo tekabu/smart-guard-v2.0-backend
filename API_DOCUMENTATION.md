@@ -41,15 +41,179 @@ Error responses use:
 }
 ```
 
+### Health Check
+
+Monitor API health and database connectivity.
+
+- `GET /api/health` - Check API health status
+
+**Response (200 OK):**
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "database": "ok"
+  }
+}
+```
+
+**Response (503 Service Unavailable):**
+```json
+{
+  "status": "unhealthy",
+  "checks": {
+    "database": "error"
+  }
+}
+```
+
+### Authentication
+
+Manage user authentication sessions.
+
+- `POST /api/login` - Authenticate user and create session
+- `POST /api/logout` - Logout user (requires authentication)
+- `GET /api/user` - Get current authenticated user (requires authentication)
+
+**Request Body (POST /api/login):**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Validation Rules (POST /api/login):**
+- `email` - required, valid email format
+- `password` - required, string
+
+**Response (POST /api/login):**
+```json
+{
+  "status": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "user@example.com",
+      "role": "STUDENT",
+      "active": true,
+      "student_id": "2024-001",
+      "faculty_id": null,
+      "course": "Computer Science",
+      "year_level": 4,
+      "attendance_rate": "95.50",
+      "department": "Engineering",
+      "last_access_at": null,
+      "email_verified_at": null,
+      "created_at": "2025-11-28T10:00:00.000000Z",
+      "updated_at": "2025-11-28T10:00:00.000000Z"
+    }
+  }
+}
+```
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "status": false,
+  "message": "The provided credentials are incorrect."
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "status": false,
+  "message": "Your account is inactive."
+}
+```
+
+**Response (POST /api/logout):**
+```json
+{
+  "status": true,
+  "data": {
+    "message": "Successfully logged out"
+  }
+}
+```
+
+**Response (GET /api/user):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "user@example.com",
+    "role": "STUDENT",
+    "active": true,
+    "student_id": "2024-001",
+    "faculty_id": null,
+    "course": "Computer Science",
+    "year_level": 4,
+    "attendance_rate": "95.50",
+    "department": "Engineering",
+    "last_access_at": null,
+    "email_verified_at": null,
+    "created_at": "2025-11-28T10:00:00.000000Z",
+    "updated_at": "2025-11-28T10:00:00.000000Z"
+  }
+}
+```
+
 ### Users
 
-Manage system users (Admin, Staff, Student, Faculty).
+Manage system users with role-based access (Admin, Staff, Student, Faculty).
 
 - `GET /api/users` - List all users
 - `POST /api/users` - Create new user
 - `GET /api/users/{id}` - Get user details
 - `PUT /api/users/{id}` - Update user
 - `DELETE /api/users/{id}` - Delete user
+
+#### User Roles and Required Fields
+
+The system uses four distinct user roles with specific required fields for each:
+
+**ADMIN Role (Required Fields):**
+- `name` - Full name
+- `email` - Unique email address
+- `password` - Minimum 8 characters
+- `role` - Must be "ADMIN"
+- `active` - Boolean (default: true)
+
+**STAFF Role (Required Fields):**
+- `name` - Full name
+- `email` - Unique email address
+- `password` - Minimum 8 characters
+- `role` - Must be "STAFF"
+- `active` - Boolean (default: true)
+
+**STUDENT Role (Required Fields):**
+- `name` - Full name
+- `email` - Unique email address
+- `password` - Minimum 8 characters
+- `role` - Must be "STUDENT"
+- `student_id` - Unique student identifier (e.g., "STU-2024001")
+- `active` - Boolean (default: true)
+- Optional: course, year_level, attendance_rate, department
+
+**FACULTY Role (Required Fields):**
+- `name` - Full name
+- `email` - Unique email address
+- `password` - Minimum 8 characters
+- `role` - Must be "FACULTY"
+- `faculty_id` - Unique faculty identifier (e.g., "FAC-2024001")
+- `active` - Boolean (default: true)
+- Optional: department
+
+**Shared Features:**
+- Passwords are automatically hashed and never returned in API responses
+- STUDENT and FACULTY users can register multiple fingerprints and RFID cards for access control
+- ADMIN and STAFF users typically use system authentication (email/password) rather than biometric/RFID
+- Inactive users cannot authenticate
 
 **Request Body (POST):**
 ```json
@@ -157,10 +321,10 @@ Manage system users (Admin, Staff, Student, Faculty).
 
 ### User Fingerprints
 
-Manage user fingerprint registrations. Includes user relationship data.
+Manage fingerprint registrations for STUDENT and FACULTY users. Includes user relationship data.
 
 - `GET /api/user-fingerprints` - List all fingerprints (includes user data)
-- `POST /api/user-fingerprints` - Register fingerprint
+- `POST /api/user-fingerprints` - Register fingerprint for student/faculty
 - `GET /api/user-fingerprints/{id}` - Get fingerprint details (includes user data)
 - `PUT /api/user-fingerprints/{id}` - Update fingerprint
 - `DELETE /api/user-fingerprints/{id}` - Delete fingerprint
@@ -239,10 +403,10 @@ Manage user fingerprint registrations. Includes user relationship data.
 
 ### User RFIDs
 
-Manage user RFID card registrations. Includes user relationship data.
+Manage RFID card registrations for STUDENT and FACULTY users. Includes user relationship data.
 
 - `GET /api/user-rfids` - List all RFID cards (includes user data)
-- `POST /api/user-rfids` - Register RFID card
+- `POST /api/user-rfids` - Register RFID card for student/faculty
 - `GET /api/user-rfids/{id}` - Get RFID details (includes user data)
 - `PUT /api/user-rfids/{id}` - Update RFID
 - `DELETE /api/user-rfids/{id}` - Delete RFID
@@ -358,6 +522,89 @@ Manage door lock devices. Includes last accessed user and associated rooms.
   ]
 }
 ```
+
+### Device Boards
+
+Manage ESP32 boards associated with devices. Includes device relationship data.
+
+- `GET /api/device-boards` - List all device boards (includes device data)
+- `POST /api/device-boards` - Register new device board
+- `GET /api/device-boards/{id}` - Get device board details (includes device data)
+- `PUT /api/device-boards/{id}` - Update device board
+- `DELETE /api/device-boards/{id}` - Delete device board
+
+**Query Parameters (GET /api/device-boards):**
+- `device_id` - Filter by device ID
+- `board_type` - Filter by board type (FINGERPRINT, RFID, LOCK, CAMERA, DISPLAY)
+- `active` - Filter by active status (true/false)
+
+**Request Body (POST):**
+```json
+{
+  "device_id": 1,
+  "board_type": "FINGERPRINT",
+  "mac_address": "AA:BB:CC:DD:EE:FF",
+  "firmware_version": "v1.2.3",
+  "active": true
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "device_id": 2,
+  "board_type": "RFID",
+  "mac_address": "11:22:33:44:55:66",
+  "firmware_version": "v2.0.1",
+  "active": false
+}
+```
+
+**Validation Rules (POST):**
+- `device_id` - required, must exist in devices table
+- `board_type` - required, must be one of: FINGERPRINT, RFID, LOCK, CAMERA, DISPLAY
+- `mac_address` - required, string, must be unique
+- `firmware_version` - optional, string
+- `active` - optional, boolean (default: true)
+
+**Validation Rules (PUT):**
+- `device_id` - optional, must exist in devices table
+- `board_type` - optional, must be one of: FINGERPRINT, RFID, LOCK, CAMERA, DISPLAY
+- `mac_address` - optional, string, must be unique (excludes current record)
+- `firmware_version` - optional, string
+- `active` - optional, boolean
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "device_id": 1,
+  "board_type": "FINGERPRINT",
+  "mac_address": "AA:BB:CC:DD:EE:FF",
+  "firmware_version": "v1.2.3",
+  "active": true,
+  "last_seen_at": "2025-11-28T10:00:00.000000Z",
+  "last_ip": "192.168.1.100",
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "device": {
+    "id": 1,
+    "device_id": "DEV-001",
+    "door_open_duration_seconds": 5,
+    "active": true,
+    "last_accessed_by_user_id": 1,
+    "last_accessed_at": "2025-11-28T10:00:00.000000Z",
+    "last_accessed_used": "FINGERPRINT"
+  }
+}
+```
+
+**Board Types:**
+- `FINGERPRINT` - Fingerprint scanner board
+- `RFID` - RFID card reader board
+- `LOCK` - Door lock control board
+- `CAMERA` - Camera board for surveillance
+- `DISPLAY` - Display board for information display
 
 ### Rooms
 
@@ -839,11 +1086,13 @@ CORS is configured to allow all origins for development. Update `/src/config/cor
 
 ## Authentication
 
-The API includes Laravel Sanctum for authentication. To use:
+The API includes authentication for protecting endpoints. To use:
 
-1. Get CSRF cookie: `GET /sanctum/csrf-cookie`
-2. Login endpoint (implement as needed)
-3. Include token in requests: `Authorization: Bearer {token}`
+1. Get authentication token by logging in: `POST /api/login`
+2. Include token in requests: `Authorization: Bearer {token}`
+3. Logout when done: `POST /api/logout`
+
+Note: Some endpoints may require authentication. Check individual endpoint documentation for requirements.
 
 ## Database Schema
 
@@ -855,6 +1104,7 @@ See migrations in `/src/database/migrations/` for complete schema.
 - **user_fingerprints** - Fingerprint registrations
 - **user_rfids** - RFID card registrations
 - **devices** - Door lock devices
+- **device_boards** - ESP32 boards associated with devices
 - **rooms** - Rooms with access control
 - **subjects** - Academic subjects
 - **schedules** - Faculty teaching schedules
@@ -867,6 +1117,20 @@ See migrations in `/src/database/migrations/` for complete schema.
 ### Using cURL
 
 ```bash
+# Health check
+curl http://localhost:8021/api/health
+
+# Login
+curl -X POST http://localhost:8021/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@test.com","password":"password123"}'
+
+# Get current user (requires authentication)
+curl -H "Authorization: Bearer {token}" http://localhost:8021/api/user
+
+# Logout (requires authentication)
+curl -X POST -H "Authorization: Bearer {token}" http://localhost:8021/api/logout
+
 # List all users
 curl http://localhost:8021/api/users
 
@@ -885,6 +1149,14 @@ curl -X PUT http://localhost:8021/api/users/1 \
 
 # Delete user
 curl -X DELETE http://localhost:8021/api/users/1
+
+# List device boards with filters
+curl "http://localhost:8021/api/device-boards?device_id=1&board_type=FINGERPRINT"
+
+# Create device board
+curl -X POST http://localhost:8021/api/device-boards \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":1,"board_type":"FINGERPRINT","mac_address":"AA:BB:CC:DD:EE:FF"}'
 ```
 
 ### Using Postman
@@ -936,6 +1208,7 @@ Most GET endpoints automatically include related data via eager loading to reduc
 - **User Fingerprints:** Includes `user` data
 - **User RFIDs:** Includes `user` data
 - **Devices:** Includes `lastAccessedByUser` and `rooms` data
+- **Device Boards:** Includes `device` data
 - **Rooms:** Includes `device`, `lastOpenedByUser`, and `lastClosedByUser` data
 - **Subjects:** No automatic relationships
 - **Schedules:** Includes `user`, `room`, `subject`, and `periods` data
