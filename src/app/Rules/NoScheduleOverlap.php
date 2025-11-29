@@ -54,7 +54,7 @@ class NoScheduleOverlap implements ValidationRule
 
             // Check for overlap: new start < existing end AND new end > existing start
             if ($newStartTime < $existingEnd && $newEndTime > $existingStart) {
-                $fail("The schedule period overlaps with an existing schedule period: {$existingStart} - {} on room {->room_id} for day {->day_of_week}.");
+                $fail("The schedule period overlaps with an existing schedule period: {$existingStart} - {$existingEnd} on room {$schedule->room_id} for day {$schedule->day_of_week}.");
                 return;
             }
         }
