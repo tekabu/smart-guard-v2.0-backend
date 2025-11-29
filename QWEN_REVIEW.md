@@ -1,10 +1,10 @@
-# Smart Guard API - Code Review Report
+# Smart Guard API - Comprehensive Code Review
 
 ## Executive Summary
 
 This is a comprehensive code review of the Smart Guard API project, a Laravel-based access control and attendance management system. The review covers architecture, security, code quality, testing, and best practices.
 
-**Overall Assessment**: ⚠️ **NEEDS ATTENTION** - The project has a solid foundation but requires significant security improvements and code quality enhancements before production deployment.
+**Overall Assessment**: ⚠️ **NEEDS ATTENTION** - The project has a solid foundation but requires significant security improvements, code quality enhancements, and fixes for critical syntax errors before production deployment.
 
 ---
 
@@ -42,6 +42,7 @@ This is a comprehensive code review of the Smart Guard API project, a Laravel-ba
 - **No Repository Pattern**: Direct model access in controllers
 - **Limited Error Handling**: Basic exception handling only
 - **No Rate Limiting**: API endpoints lack rate limiting protection
+- **Missing API Versioning**: No versioning strategy implemented
 
 ---
 
@@ -63,6 +64,10 @@ This is a comprehensive code review of the Smart Guard API project, a Laravel-ba
    - Basic validation rules but missing security-specific checks
    - No XSS protection headers
    - **Risk**: Injection attacks possible
+
+4. **Critical Syntax Error in UniqueScheduleCombination Rule**
+   - The file `/src/app/Rules/UniqueScheduleCombination.php` contains syntax errors with variable names consisting of underscores instead of proper variable names
+   - **Risk**: Complete failure of schedule uniqueness validation, allowing duplicate schedules
 
 ### ⚠️ High Priority Issues
 
@@ -165,29 +170,64 @@ ALTER TABLE users ADD COLUMN deleted_at TIMESTAMP NULL;
    - Business logic in controllers instead of service layer
    - Violates Single Responsibility Principle
 
-2. **Magic Numbers**
+2. **Critical Syntax Error in UniqueScheduleCombination Rule**
+   - The file contains invalid PHP syntax with underscore variables instead of proper variable names
+   - **Fix**: Replace the content with proper PHP code
+
+3. **Magic Numbers**
    - Hardcoded values in validation rules
    - Should use constants or configuration
 
-3. **Error Handling**
+4. **Error Handling**
    - Limited exception handling
    - No logging for debugging
 
 ### 🔧 Code Quality Improvements
 
 ```php
-// Extract to service layer
-class UserService {
-    public function createUser(array $data): User {
-        // Business logic here
-    }
-}
+// Corrected UniqueScheduleCombination Rule
+<?php
 
-// Use constants
-class User extends Authenticatable {
-    const ROLE_ADMIN = 'ADMIN';
-    const ROLE_STAFF = 'STAFF';
-    // ...
+namespace App\Rules;
+
+use App\Models\Schedule;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
+
+class UniqueScheduleCombination implements ValidationRule
+{
+    protected $scheduleId;
+
+    public function __construct($scheduleId = null)
+    {
+        $this->scheduleId = $scheduleId;
+    }
+
+    public function validate(string $attribute, mixed $value, Closure $fail): void
+    {
+        $userId = request('user_id');
+        $dayOfWeek = request('day_of_week');
+        $roomId = request('room_id');
+        $subjectId = request('subject_id');
+
+        // Check if all required fields are present before validating uniqueness
+        if ($userId && $dayOfWeek && $roomId && $subjectId) {
+            // Build the query to check for existing records with the same combination
+            $query = Schedule::where('user_id', $userId)
+                            ->where('day_of_week', $dayOfWeek)
+                            ->where('room_id', $roomId)
+                            ->where('subject_id', $subjectId);
+
+            // If updating, exclude the current record
+            if ($this->scheduleId) {
+                $query->where('id', '!=', $this->scheduleId);
+            }
+
+            if ($query->exists()) {
+                $fail('A schedule with the same user, day of week, room, and subject already exists.');
+            }
+        }
+    }
 }
 ```
 
@@ -239,10 +279,11 @@ public function show(string $id) {
 ## 🎯 Priority Recommendations
 
 ### 🚨 Critical (Fix Immediately)
-1. **Implement Authentication** - Add `auth:sanctum` middleware to all API routes
-2. **Add Authorization** - Implement role-based access control
-3. **Environment Security** - Complete `.env.example` with all required variables
-4. **Input Sanitization** - Add comprehensive input validation and sanitization
+1. **Fix Syntax Error in UniqueScheduleCombination Rule** - The file has invalid PHP syntax
+2. **Implement Authentication** - Add `auth:sanctum` middleware to all API routes
+3. **Add Authorization** - Implement role-based access control
+4. **Environment Security** - Complete `.env.example` with all required variables
+5. **Input Sanitization** - Add comprehensive input validation and sanitization
 
 ### ⚠️ High Priority (Fix This Sprint)
 1. **Add Rate Limiting** - Protect against API abuse
@@ -277,12 +318,14 @@ public function show(string $id) {
 2. **No Input Sanitization** - Potential XSS and SQL injection risks
 3. **Missing CSRF Protection** - API endpoints vulnerable to CSRF attacks
 4. **No Rate Limiting** - Vulnerable to DoS attacks
+5. **Critical Syntax Error** - The UniqueScheduleCombination rule has invalid PHP syntax
 
 ### Code Smells Detected
 1. **God Controllers** - Controllers handling too much responsibility
 2. **Magic Numbers** - Hardcoded values throughout codebase
 3. **Inconsistent Naming** - Some variables use inconsistent naming conventions
 4. **Missing Type Declarations** - Some methods missing return type declarations
+5. **Invalid Syntax** - The UniqueScheduleCombination rule has syntax errors
 
 ### Performance Bottlenecks
 1. **Database Queries** - Missing indexes and eager loading
@@ -295,6 +338,7 @@ public function show(string $id) {
 ## 📋 Action Items
 
 ### Immediate Actions (This Week)
+- [ ] Fix syntax error in UniqueScheduleCombination rule
 - [ ] Add authentication middleware to all API routes
 - [ ] Implement role-based authorization
 - [ ] Complete environment configuration
@@ -316,14 +360,14 @@ public function show(string $id) {
 
 ## 🎯 Conclusion
 
-The Smart Guard API project shows good architectural foundations and comprehensive functionality. However, it has **critical security vulnerabilities** that must be addressed before any production deployment. The code quality is generally good, and the testing coverage is decent, but security is severely lacking.
+The Smart Guard API project shows good architectural foundations and comprehensive functionality. However, it has **critical security vulnerabilities** and a **critical syntax error in the UniqueScheduleCombination rule** that must be addressed before any production deployment. The code quality is generally good, and the testing coverage is decent, but security is severely lacking.
 
-**Recommendation**: Address the critical security issues immediately, then focus on the high-priority items. The project has potential but requires significant security hardening.
+**Recommendation**: Address the critical issues immediately, starting with the syntax error in the validation rule and authentication implementation, then focus on the high-priority items. The project has potential but requires significant security hardening.
 
 ---
 
 ## 📞 Contact for Review
 
-This code review was conducted by Qwen Code on November 28, 2025. For questions or clarifications about any findings, please refer to the specific sections above or request additional analysis.
+This code review was conducted by Qwen Code. For questions or clarifications about any findings, please refer to the specific sections above or request additional analysis.
 
-**Review Status**: ⚠️ **ACTION REQUIRED** - Critical security issues need immediate attention.
+**Review Status**: ⚠️ **ACTION REQUIRED** - Critical security issues and syntax errors need immediate attention.
