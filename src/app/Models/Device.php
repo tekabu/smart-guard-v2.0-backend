@@ -33,4 +33,9 @@ class Device extends Model
     {
         return $this->hasMany(UserAccessLog::class);
     }
+
+    public function boards()
+    {
+        return $this->hasMany(DeviceBoard::class);
+    }
 }

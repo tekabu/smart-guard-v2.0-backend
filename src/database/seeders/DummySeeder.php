@@ -11,8 +11,11 @@ class DummySeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed devices first (required by rooms)
+        // Seed devices first (required by rooms and device boards)
         $this->call(DeviceSeeder::class);
+
+        // Seed device boards (requires devices)
+        $this->call(DeviceBoardSeeder::class);
 
         // Seed rooms (requires devices)
         $this->call(RoomSeeder::class);

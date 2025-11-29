@@ -19,9 +19,14 @@ class DummyApiSeeder extends Seeder
         $this->command->info('Using APP_URL: ' . env('APP_URL', 'http://localhost'));
         $this->command->newLine();
 
-        // Seed devices first (required by rooms)
+        // Seed devices first (required by rooms and device boards)
         $this->command->info('=== Seeding Devices ===');
         $this->call(Api\DeviceApiSeeder::class);
+        $this->command->newLine();
+
+        // Seed device boards (requires devices)
+        $this->command->info('=== Seeding Device Boards ===');
+        $this->call(Api\DeviceBoardApiSeeder::class);
         $this->command->newLine();
 
         // Seed rooms (requires devices)
