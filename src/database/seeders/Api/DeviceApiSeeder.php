@@ -13,11 +13,17 @@ class DeviceApiSeeder extends Seeder
     public function run(): void
     {
         $baseUrl = env('APP_URL', 'http://localhost');
+        $existingDeviceIds = \App\Models\Device::pluck('device_id')->toArray();
 
         // Create 20 devices via API
         for ($i = 1; $i <= 20; $i++) {
+            // Generate unique random device ID that doesn't exist in database
+            do {
+                $deviceId = 'DEV-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            } while (in_array($deviceId, $existingDeviceIds));
+
             $response = Http::post("{$baseUrl}/api/devices", [
-                'device_id' => 'DEV-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'device_id' => $deviceId,
                 'door_open_duration_seconds' => rand(3, 10),
                 'active' => true,
             ]);
