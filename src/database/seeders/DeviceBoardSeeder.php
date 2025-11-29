@@ -36,7 +36,5 @@ class DeviceBoardSeeder extends Seeder
                 ]);
             }
         }
-
-        $this->command->info('DeviceBoards seeded successfully!');
     }
 }
