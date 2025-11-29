@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserFingerprintController;
 use App\Http\Controllers\Api\UserRfidController;
@@ -13,6 +14,11 @@ use App\Http\Controllers\Api\UserAuditLogController;
 use App\Http\Controllers\Api\DeviceBoardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Authentication API
+Route::post('login', [AuthController::class, 'login']);
+Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
 // Users API
 Route::apiResource("users", UserController::class);

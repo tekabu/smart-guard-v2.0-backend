@@ -12,9 +12,6 @@
             <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
-    <logging>
-        <testdoxText outputFile="php://stdout"/>
-    </logging>
     <source>
         <include>
             <directory>app</directory>
