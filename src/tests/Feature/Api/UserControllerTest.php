@@ -116,6 +116,46 @@ class UserControllerTest extends TestCase
         $response->assertStatus(422)->assertJsonValidationErrors(['email']);
     }
 
+    public function test_cannot_create_student_with_duplicate_student_id()
+    {
+        $actingUser = User::factory()->create();
+        User::factory()->create([
+            'role' => 'STUDENT',
+            'student_id' => 'STU-2024-001',
+        ]);
+
+        $payload = [
+            'name' => 'Student Two',
+            'email' => 'student2@example.com',
+            'password' => 'password123',
+            'role' => 'STUDENT',
+            'student_id' => 'STU-2024-001',
+        ];
+
+        $response = $this->actingAs($actingUser)->postJson('/api/users', $payload);
+        $response->assertStatus(422)->assertJsonValidationErrors(['student_id']);
+    }
+
+    public function test_cannot_create_faculty_with_duplicate_faculty_id()
+    {
+        $actingUser = User::factory()->create();
+        User::factory()->create([
+            'role' => 'FACULTY',
+            'faculty_id' => 'FAC-2024-001',
+        ]);
+
+        $payload = [
+            'name' => 'Faculty Two',
+            'email' => 'faculty2@example.com',
+            'password' => 'password123',
+            'role' => 'FACULTY',
+            'faculty_id' => 'FAC-2024-001',
+        ];
+
+        $response = $this->actingAs($actingUser)->postJson('/api/users', $payload);
+        $response->assertStatus(422)->assertJsonValidationErrors(['faculty_id']);
+    }
+
     public function test_cannot_create_user_with_invalid_role()
     {
         $user = User::factory()->create(); // Acting user
