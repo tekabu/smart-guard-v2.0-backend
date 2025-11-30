@@ -19,6 +19,12 @@ class Device extends Model
                 $device->api_token = Str::random(64);
             }
         });
+
+        static::updating(function (Device $device) {
+            if (!isset($device->attributes['api_token']) || empty($device->attributes['api_token'])) {
+                $device->api_token = Str::random(64);
+            }
+        });
     }
 
     protected function casts(): array

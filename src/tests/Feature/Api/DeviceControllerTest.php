@@ -177,4 +177,58 @@ class DeviceControllerTest extends TestCase
 
         $this->assertDatabaseHas('devices', ['device_id' => 'DEV-CUSTOM-001', 'api_token' => $customToken]);
     }
+
+    public function test_api_token_is_generated_on_update_if_null()
+    {
+        $user = User::factory()->create();
+        $device = Device::factory()->create(['api_token' => 'original-token-123456789012345678901234567890123456789012345678']);
+
+        // Update device with api_token set to null
+        $response = $this->actingAs($user)->putJson('/api/devices/' . $device->id, [
+            'api_token' => null,
+            'door_open_duration_seconds' => 10
+        ]);
+
+        $response->assertStatus(200);
+        $newToken = $response->json('data.api_token');
+
+        $this->assertNotNull($newToken);
+        $this->assertEquals(64, strlen($newToken));
+        $this->assertNotEquals('original-token-123456789012345678901234567890123456789012345678', $newToken);
+    }
+
+    public function test_api_token_can_be_updated_to_custom_value()
+    {
+        $user = User::factory()->create();
+        $device = Device::factory()->create();
+        $originalToken = $device->api_token;
+
+        $newCustomToken = 'new-custom-token-1234567890123456789012345678901234567890123456';
+        $response = $this->actingAs($user)->putJson('/api/devices/' . $device->id, [
+            'api_token' => $newCustomToken,
+            'door_open_duration_seconds' => 10
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.api_token', $newCustomToken);
+
+        $this->assertDatabaseHas('devices', ['id' => $device->id, 'api_token' => $newCustomToken]);
+        $this->assertNotEquals($originalToken, $newCustomToken);
+    }
+
+    public function test_api_token_remains_unchanged_when_not_in_update_request()
+    {
+        $user = User::factory()->create();
+        $device = Device::factory()->create();
+        $originalToken = $device->api_token;
+
+        $response = $this->actingAs($user)->putJson('/api/devices/' . $device->id, [
+            'door_open_duration_seconds' => 10
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.api_token', $originalToken);
+
+        $this->assertDatabaseHas('devices', ['id' => $device->id, 'api_token' => $originalToken]);
+    }
 }

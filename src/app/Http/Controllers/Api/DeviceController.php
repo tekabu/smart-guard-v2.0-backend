@@ -49,6 +49,7 @@ class DeviceController extends Controller
 
         $updateRules = [
             'device_id' => 'sometimes|string|unique:devices,device_id,{id}',
+            'api_token' => 'nullable|string|max:80|unique:devices,api_token,{id}',
             'door_open_duration_seconds' => 'nullable|integer|min:1',
             'active' => 'sometimes|boolean',
             'last_seen_at' => 'nullable|date',
