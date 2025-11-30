@@ -1,24 +1,25 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClassSessionController;
+use App\Http\Controllers\Api\DeviceBoardController;
+use App\Http\Controllers\Api\DeviceCommunicationController;
+use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\RoomController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\SchedulePeriodController;
+use App\Http\Controllers\Api\SectionController;
+use App\Http\Controllers\Api\SectionSubjectController;
+use App\Http\Controllers\Api\SectionSubjectScheduleController;
+use App\Http\Controllers\Api\SectionSubjectStudentController;
+use App\Http\Controllers\Api\StudentScheduleController;
+use App\Http\Controllers\Api\SubjectController;
+use App\Http\Controllers\Api\UserAccessLogController;
+use App\Http\Controllers\Api\UserAuditLogController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserFingerprintController;
 use App\Http\Controllers\Api\UserRfidController;
-use App\Http\Controllers\Api\DeviceController;
-use App\Http\Controllers\Api\RoomController;
-use App\Http\Controllers\Api\SubjectController;
-use App\Http\Controllers\Api\ScheduleController;
-use App\Http\Controllers\Api\SchedulePeriodController;
-use App\Http\Controllers\Api\ClassSessionController;
-use App\Http\Controllers\Api\StudentScheduleController;
-use App\Http\Controllers\Api\UserAccessLogController;
-use App\Http\Controllers\Api\UserAuditLogController;
-use App\Http\Controllers\Api\SectionController;
-use App\Http\Controllers\Api\SectionSubjectController;
-use App\Http\Controllers\Api\SectionSubjectStudentController;
-use App\Http\Controllers\Api\DeviceBoardController;
-use App\Http\Controllers\Api\DeviceCommunicationController;
 use App\Http\Middleware\EnsureDeviceBoard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource("sections", SectionController::class);
     Route::get('section-subjects/options', [SectionSubjectController::class, 'options']);
     Route::apiResource("section-subjects", SectionSubjectController::class);
+    Route::apiResource("section-subject-schedules", SectionSubjectScheduleController::class);
     Route::apiResource("section-subject-students", SectionSubjectStudentController::class);
 
     // Schedules API

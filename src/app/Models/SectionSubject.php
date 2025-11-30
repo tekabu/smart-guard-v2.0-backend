@@ -34,4 +34,9 @@ class SectionSubject extends Model
     {
         return $this->hasMany(SectionSubjectStudent::class);
     }
+
+    public function schedules()
+    {
+        return $this->hasMany(SectionSubjectSchedule::class);
+    }
 }
