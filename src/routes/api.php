@@ -77,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource("schedule-periods", SchedulePeriodController::class);
 
     // Class Sessions API
+    Route::post('class-sessions/{class_session}/close', [ClassSessionController::class, 'close']);
     Route::apiResource("class-sessions", ClassSessionController::class);
 
     // User Access Logs API

@@ -72,6 +72,60 @@ class ClassSessionControllerTest extends TestCase
         $this->assertDatabaseHas('class_sessions', ['start_time' => '08:00:00']);
     }
 
+    public function test_start_time_defaults_to_current_time_when_missing()
+    {
+        $user = User::factory()->create();
+        $room = Room::factory()->create();
+        $subject = Subject::factory()->create();
+        $schedule = Schedule::factory()->create([
+            'user_id' => $user->id,
+            'room_id' => $room->id,
+            'subject_id' => $subject->id,
+            'day_of_week' => 'FRIDAY',
+        ]);
+        $schedulePeriod = SchedulePeriod::factory()->create([
+            'schedule_id' => $schedule->id,
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+        ]);
+
+        $sessionData = [
+            'schedule_period_id' => $schedulePeriod->id,
+            'end_time' => '09:30:00',
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/class-sessions', $sessionData);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.start_time', '09:00:00');
+    }
+
+    public function test_end_time_is_optional()
+    {
+        $user = User::factory()->create();
+        $room = Room::factory()->create();
+        $subject = Subject::factory()->create();
+        $schedule = Schedule::factory()->create([
+            'user_id' => $user->id,
+            'room_id' => $room->id,
+            'subject_id' => $subject->id,
+            'day_of_week' => 'FRIDAY',
+        ]);
+        $schedulePeriod = SchedulePeriod::factory()->create([
+            'schedule_id' => $schedule->id,
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+        ]);
+
+        $sessionData = [
+            'schedule_period_id' => $schedulePeriod->id,
+            'start_time' => '08:30:00',
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/class-sessions', $sessionData);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.end_time', null);
+    }
+
     public function test_can_show_class_session()
     {
         $user = User::factory()->create();
@@ -103,11 +157,11 @@ class ClassSessionControllerTest extends TestCase
         $this->assertDatabaseMissing('class_sessions', ['id' => $session->id]);
     }
 
-    public function test_requires_all_fields()
+    public function test_requires_schedule_period_id()
     {
         $user = User::factory()->create();
         $response = $this->actingAs($user)->postJson('/api/class-sessions', []);
-        $response->assertStatus(422)->assertJsonValidationErrors(['schedule_period_id', 'start_time', 'end_time']);
+        $response->assertStatus(422)->assertJsonValidationErrors(['schedule_period_id']);
     }
 
     public function test_show_class_session_that_does_not_exist()
@@ -135,7 +189,19 @@ class ClassSessionControllerTest extends TestCase
     public function test_end_time_must_be_after_start_time()
     {
         $user = User::factory()->create();
-        $schedulePeriod = SchedulePeriod::factory()->create();
+        $room = Room::factory()->create();
+        $subject = Subject::factory()->create();
+        $schedule = Schedule::factory()->create([
+            'user_id' => $user->id,
+            'room_id' => $room->id,
+            'subject_id' => $subject->id,
+            'day_of_week' => 'FRIDAY',
+        ]);
+        $schedulePeriod = SchedulePeriod::factory()->create([
+            'schedule_id' => $schedule->id,
+            'start_time' => '08:00:00',
+            'end_time' => '11:00:00',
+        ]);
         $sessionData = [
             'schedule_period_id' => $schedulePeriod->id,
             'start_time' => '09:30:00',
@@ -177,10 +243,61 @@ class ClassSessionControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $session = ClassSession::factory()->create(['start_time' => '08:00:00', 'end_time' => '09:30:00']);
-        $updateData = ['start_time' => '10:00:00'];
+        $updateData = ['start_time' => '07:00:00'];
         $response = $this->actingAs($user)->putJson('/api/class-sessions/' . $session->id, $updateData);
         $response->assertStatus(200)
-            ->assertJsonPath('data.start_time', '10:00:00');
+            ->assertJsonPath('data.start_time', '07:00:00');
+    }
+
+    public function test_cannot_update_end_time_before_start_time()
+    {
+        $user = User::factory()->create();
+        $session = ClassSession::factory()->create(['start_time' => '09:00:00', 'end_time' => '10:00:00']);
+
+        $updateData = ['end_time' => '08:00:00'];
+        $response = $this->actingAs($user)->putJson('/api/class-sessions/' . $session->id, $updateData);
+        $response->assertStatus(422)->assertJsonValidationErrors(['end_time']);
+    }
+
+    public function test_cannot_update_start_time_after_existing_end_time()
+    {
+        $user = User::factory()->create();
+        $session = ClassSession::factory()->create(['start_time' => '08:00:00', 'end_time' => '09:30:00']);
+
+        $updateData = ['start_time' => '10:30:00'];
+        $response = $this->actingAs($user)->putJson('/api/class-sessions/' . $session->id, $updateData);
+        $response->assertStatus(422)->assertJsonValidationErrors(['end_time']);
+    }
+
+    public function test_can_close_class_session()
+    {
+        $user = User::factory()->create();
+        $session = ClassSession::factory()->create(['start_time' => '08:00:00', 'end_time' => null]);
+
+        $response = $this->actingAs($user)->postJson('/api/class-sessions/' . $session->id . '/close');
+        $response->assertStatus(200)
+            ->assertJsonPath('data.end_time', '09:00:00');
+
+        $this->assertDatabaseHas('class_sessions', [
+            'id' => $session->id,
+            'end_time' => '09:00:00',
+        ]);
+    }
+
+    public function test_close_session_uses_start_time_when_past_end_time()
+    {
+        $user = User::factory()->create();
+        $session = ClassSession::factory()->create(['start_time' => '10:00:00', 'end_time' => null]);
+
+        $payload = ['end_time' => '09:00:00'];
+        $response = $this->actingAs($user)->postJson('/api/class-sessions/' . $session->id . '/close', $payload);
+        $response->assertStatus(200)
+            ->assertJsonPath('data.end_time', '10:00:00');
+
+        $this->assertDatabaseHas('class_sessions', [
+            'id' => $session->id,
+            'end_time' => '10:00:00',
+        ]);
     }
 
     public function test_unauthenticated_users_cannot_access_class_sessions()
