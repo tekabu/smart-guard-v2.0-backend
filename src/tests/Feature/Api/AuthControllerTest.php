@@ -17,6 +17,7 @@ class AuthControllerTest extends TestCase
             'email' => 'test@example.com',
             'password' => Hash::make('password123'),
             'active' => true,
+            'role' => 'ADMIN',
         ]);
 
         $response = $this->postJson('/api/login', [
