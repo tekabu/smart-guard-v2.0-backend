@@ -4,17 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassSession;
-use App\Rules\UniqueClassSessionPerDay;
-use App\Rules\ValidClassSessionDay;
-use App\Rules\ValidClassSessionTime;
 use App\Traits\ApiResponse;
+use App\Traits\HandlesClassSessions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class ClassSessionController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, HandlesClassSessions;
 
     public function index()
     {
@@ -34,7 +31,7 @@ class ClassSessionController extends Controller
             $request->merge(['start_time' => Carbon::now()->format('H:i:s')]);
         }
 
-        $validated = $request->validate($this->validationRules());
+        $validated = $request->validate($this->classSessionValidationRules());
 
         $this->ensureEndTimeNotBeforeStart($validated['start_time'] ?? null, $validated['end_time'] ?? null);
 
@@ -52,7 +49,7 @@ class ClassSessionController extends Controller
     {
         $record = ClassSession::findOrFail($id);
 
-        $validated = $request->validate($this->validationRules(true, $id));
+        $validated = $request->validate($this->classSessionValidationRules(true, $id));
 
         $nextStartTime = $validated['start_time'] ?? $record->start_time;
         $nextEndTime = array_key_exists('end_time', $validated) ? $validated['end_time'] : $record->end_time;
@@ -87,45 +84,5 @@ class ClassSessionController extends Controller
         $record = ClassSession::findOrFail($id);
         $record->delete();
         return response()->json(null, 204);
-    }
-
-    /**
-     * Build validation rules for create/update operations.
-     */
-    private function validationRules(bool $isUpdate = false, ?int $ignoreId = null): array
-    {
-        $scheduleRules = [
-            $isUpdate ? 'sometimes' : 'required',
-            'exists:schedule_periods,id',
-            new ValidClassSessionDay,
-            new ValidClassSessionTime,
-            new UniqueClassSessionPerDay($ignoreId),
-        ];
-
-        return [
-            'schedule_period_id' => $scheduleRules,
-            'start_time' => [
-                $isUpdate ? 'sometimes' : 'nullable',
-                'date_format:H:i:s',
-            ],
-            'end_time' => [
-                'nullable',
-                'date_format:H:i:s',
-            ],
-        ];
-    }
-
-    /**
-     * Ensure end time is never before start time.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    private function ensureEndTimeNotBeforeStart(?string $startTime, ?string $endTime): void
-    {
-        if ($startTime && $endTime && $endTime < $startTime) {
-            throw ValidationException::withMessages([
-                'end_time' => ['End time must not be earlier than start time.'],
-            ]);
-        }
     }
 }

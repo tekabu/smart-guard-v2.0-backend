@@ -32,6 +32,12 @@ Route::prefix('device-communications')
     ->group(function () {
         Route::post('heartbeat', [DeviceCommunicationController::class, 'heartbeat']);
         Route::get('me', [DeviceCommunicationController::class, 'me']);
+        Route::post('validate-card', [DeviceCommunicationController::class, 'validateCard']);
+        Route::post('validate-fingerprint', [DeviceCommunicationController::class, 'validateFingerprint']);
+        Route::post('scan-card', [DeviceCommunicationController::class, 'scanCard']);
+        Route::post('scan-fingerprint', [DeviceCommunicationController::class, 'scanFingerprint']);
+        Route::post('class-sessions/from-card', [DeviceCommunicationController::class, 'createClassSessionFromCard']);
+        Route::post('class-sessions/from-fingerprint', [DeviceCommunicationController::class, 'createClassSessionFromFingerprint']);
     });
 
 Route::middleware('auth:sanctum')->group(function () {
