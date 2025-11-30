@@ -342,4 +342,36 @@ class SchedulePeriodControllerTest extends TestCase
             ->assertJsonStructure(['status', 'data' => ['count']])
             ->assertJsonPath('data.count', 10);
     }
+
+    public function test_can_filter_schedule_periods_by_schedule()
+    {
+        $user = User::factory()->create();
+        
+        // Create two different schedules
+        $schedule1 = Schedule::factory()->create();
+        $schedule2 = Schedule::factory()->create();
+        
+        // Create schedule periods for both schedules
+        $period1 = SchedulePeriod::factory()->create(['schedule_id' => $schedule1->id]);
+        $period2 = SchedulePeriod::factory()->create(['schedule_id' => $schedule1->id]);
+        $period3 = SchedulePeriod::factory()->create(['schedule_id' => $schedule2->id]);
+        
+        // Test filtering by schedule1
+        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule=' . $schedule1->id);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(2, 'data');
+            
+        // Test filtering by schedule2
+        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule=' . $schedule2->id);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(1, 'data');
+            
+        // Test with non-existent schedule ID
+        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule=99999');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(0, 'data');
+    }
 }

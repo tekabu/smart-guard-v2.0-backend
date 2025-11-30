@@ -12,9 +12,16 @@ class SchedulePeriodController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function index(Request $request)
     {
-        $records = SchedulePeriod::query()->with(['schedule'])->get();
+        $query = SchedulePeriod::query()->with(['schedule']);
+        
+        // Filter by schedule_id if provided
+        if ($request->has('schedule')) {
+            $query->where('schedule_id', $request->input('schedule'));
+        }
+        
+        $records = $query->get();
         return $this->successResponse($records);
     }
 
