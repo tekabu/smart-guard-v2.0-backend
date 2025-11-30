@@ -21,14 +21,15 @@ class SectionSubjectController extends Controller
 
     public function options()
     {
-        $options = SectionSubject::with(['section', 'subject'])
+        $options = SectionSubject::with(['section', 'subject', 'faculty'])
             ->get()
             ->map(fn ($record) => [
                 'id' => $record->id,
                 'label' => sprintf(
-                    '%s - %s',
+                    '%s - %s - %s',
                     $record->section->section ?? 'N/A',
-                    $record->subject->subject ?? 'N/A'
+                    $record->subject->subject ?? 'N/A',
+                    $record->faculty->name ?? 'N/A'
                 ),
             ]);
 
