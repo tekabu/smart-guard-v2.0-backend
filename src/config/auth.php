@@ -112,4 +112,8 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    'login_guard' => [
+        'allowed_roles' => explode(',', env('AUTH_ALLOWED_ROLES', 'ADMIN,STAFF')),
+    ],
+
 ];

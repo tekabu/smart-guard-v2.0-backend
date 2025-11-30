@@ -34,6 +34,11 @@ class AuthController extends Controller
             return $this->errorResponse('Your account is inactive.', 403);
         }
 
+        $allowedRoles = config('auth.login_guard.allowed_roles', ['ADMIN', 'STAFF']);
+        if (!in_array($user->role, $allowedRoles, true)) {
+            return $this->errorResponse('You are not authorized to access this portal.', 403);
+        }
+
         Auth::login($user);
 
         return $this->successResponse([
