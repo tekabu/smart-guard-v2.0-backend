@@ -46,6 +46,7 @@ class DeviceBoardController extends Controller
         $validated = $request->validate([
             'device_id' => 'required|exists:devices,id',
             'board_type' => 'required|in:FINGERPRINT,RFID,LOCK,CAMERA,DISPLAY',
+            'api_token' => 'nullable|string|max:80|unique:device_boards,api_token',
             'mac_address' => ['nullable', 'string', new UniqueMacAddress()],
             'firmware_version' => 'nullable|string',
             'active' => 'boolean',
@@ -68,6 +69,7 @@ class DeviceBoardController extends Controller
         $updateRules = [
             'device_id' => 'sometimes|exists:devices,id',
             'board_type' => 'sometimes|in:FINGERPRINT,RFID,LOCK,CAMERA,DISPLAY',
+            'api_token' => 'nullable|string|max:80|unique:device_boards,api_token,' . $id,
             'mac_address' => ['nullable', 'string', new UniqueMacAddress((int)$id)],
             'firmware_version' => 'nullable|string',
             'active' => 'sometimes|boolean',

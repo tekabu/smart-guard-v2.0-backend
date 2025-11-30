@@ -70,6 +70,8 @@ class DeviceBoardControllerTest extends TestCase
             ->assertJsonPath('data.device_id', $device->id)
             ->assertJsonPath('data.board_type', 'FINGERPRINT')
             ->assertJsonPath('data.mac_address', 'AA:BB:CC:DD:EE:FF');
+
+        $this->assertNotEmpty($response->json('data.api_token'));
             
         $this->assertDatabaseHas('device_boards', ['mac_address' => 'AA:BB:CC:DD:EE:FF']);
     }
@@ -242,6 +244,26 @@ class DeviceBoardControllerTest extends TestCase
         $response = $this->actingAs($user)->putJson('/api/device-boards/99999', $updateData);
         
         $response->assertStatus(404);
+    }
+
+    public function test_updating_without_api_token_regenerates_value()
+    {
+        $user = User::factory()->create();
+        $board = DeviceBoard::factory()->create();
+        $oldToken = $board->api_token;
+
+        $response = $this->actingAs($user)->putJson('/api/device-boards/' . $board->id, [
+            'api_token' => null,
+        ]);
+
+        $response->assertStatus(200);
+        $newToken = $response->json('data.api_token');
+        $this->assertNotEmpty($newToken);
+        $this->assertNotEquals($oldToken, $newToken);
+        $this->assertDatabaseHas('device_boards', [
+            'id' => $board->id,
+            'api_token' => $newToken,
+        ]);
     }
 
     public function test_can_delete_device_board()

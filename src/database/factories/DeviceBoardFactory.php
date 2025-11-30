@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Device;
 use App\Models\DeviceBoard;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\DeviceBoard>
@@ -23,6 +24,7 @@ class DeviceBoardFactory extends Factory
         return [
             'device_id' => Device::factory(),
             'board_type' => fake()->randomElement(['FINGERPRINT', 'RFID', 'LOCK', 'CAMERA', 'DISPLAY']),
+            'api_token' => Str::random(64),
             'mac_address' => strtoupper(fake()->unique()->macAddress()),
             'firmware_version' => 'v' . fake()->numberBetween(1, 3) . '.' . fake()->numberBetween(0, 9) . '.' . fake()->numberBetween(0, 9),
             'active' => true,
