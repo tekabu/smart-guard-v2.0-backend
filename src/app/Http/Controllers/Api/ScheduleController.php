@@ -46,6 +46,7 @@ class ScheduleController extends Controller
         }
 
         $record = Schedule::create($validated);
+        $record->load(['user', 'room', 'subject']);
         return $this->successResponse($record, 201);
     }
 
@@ -87,6 +88,7 @@ class ScheduleController extends Controller
         }
 
         $record->update($validated);
+        $record->load(['user', 'room', 'subject']);
         return $this->successResponse($record);
     }
 
