@@ -2,20 +2,20 @@ services:
   mysql:
     ports: []
 
-  filebrowser:
-    image: filebrowser/filebrowser:s6
-    container_name: car-wash-filebrowser
-    ports:
-      - 8015:80
-    volumes:
-      - ./src:/srv
-      - ./filebrowser/database:/database
-      - ./filebrowser/config:/config
-    restart: unless-stopped
+  # filebrowser:
+  #   image: filebrowser/filebrowser:s6
+  #   container_name: car-wash-filebrowser
+  #   ports:
+  #     - 8015:80
+  #   volumes:
+  #     - ./src:/srv
+  #     - ./filebrowser/database:/database
+  #     - ./filebrowser/config:/config
+  #   restart: unless-stopped
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: car-wash-tunnel
-    command: >
-      tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
-    restart: unless-stopped
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: car-wash-tunnel
+  #   command: >
+  #     tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
+  #   restart: unless-stopped
