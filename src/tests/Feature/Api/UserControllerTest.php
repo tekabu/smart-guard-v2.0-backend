@@ -164,4 +164,80 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($user)->putJson('/api/users/' . $user1->id, $updateData);
         $response->assertStatus(422)->assertJsonValidationErrors(['email']);
     }
+
+    public function test_update_user_without_password_retains_old_password()
+    {
+        $actingUser = User::factory()->create();
+        $updateUser = User::factory()->create(['password' => bcrypt('original_password')]);
+        
+        // Update user without providing password
+        $updateData = ['name' => 'Updated Name'];
+        $response = $this->actingAs($actingUser)->putJson('/api/users/' . $updateUser->id, $updateData);
+        
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('users', ['id' => $updateUser->id, 'name' => 'Updated Name']);
+        
+        // Verify password hasn't changed by checking the password hash
+        $updatedUser = User::find($updateUser->id);
+        $this->assertTrue(\Hash::check('original_password', $updatedUser->password));
+    }
+
+    public function test_update_user_with_empty_password_retains_old_password()
+    {
+        $actingUser = User::factory()->create();
+        $updateUser = User::factory()->create(['password' => bcrypt('original_password')]);
+        
+        // Update user with empty password
+        $updateData = ['name' => 'Updated Name', 'password' => ''];
+        $response = $this->actingAs($actingUser)->putJson('/api/users/' . $updateUser->id, $updateData);
+        
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('users', ['id' => $updateUser->id, 'name' => 'Updated Name']);
+        
+        // Verify password hasn't changed
+        $updatedUser = User::find($updateUser->id);
+        $this->assertTrue(\Hash::check('original_password', $updatedUser->password));
+    }
+
+    public function test_update_user_with_new_password_changes_password()
+    {
+        $actingUser = User::factory()->create();
+        $updateUser = User::factory()->create(['password' => bcrypt('original_password')]);
+        
+        // Update user with new password and confirmation
+        $updateData = [
+            'name' => 'Updated Name',
+            'password' => 'new_password123',
+            'password_confirmation' => 'new_password123'
+        ];
+        $response = $this->actingAs($actingUser)->putJson('/api/users/' . $updateUser->id, $updateData);
+        
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('users', ['id' => $updateUser->id, 'name' => 'Updated Name']);
+        
+        // Verify password has changed
+        $updatedUser = User::find($updateUser->id);
+        $this->assertFalse(\Hash::check('original_password', $updatedUser->password));
+        $this->assertTrue(\Hash::check('new_password123', $updatedUser->password));
+    }
+
+    public function test_update_user_with_password_confirmation_mismatch_fails()
+    {
+        $actingUser = User::factory()->create();
+        $updateUser = User::factory()->create(['password' => bcrypt('original_password')]);
+        
+        // Update user with mismatched password confirmation
+        $updateData = [
+            'name' => 'Updated Name',
+            'password' => 'new_password123',
+            'password_confirmation' => 'different_password123'
+        ];
+        $response = $this->actingAs($actingUser)->putJson('/api/users/' . $updateUser->id, $updateData);
+        
+        $response->assertStatus(422)->assertJsonValidationErrors(['password_confirmation']);
+        
+        // Verify password hasn't changed
+        $updatedUser = User::find($updateUser->id);
+        $this->assertTrue(\Hash::check('original_password', $updatedUser->password));
+    }
 }

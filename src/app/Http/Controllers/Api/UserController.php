@@ -61,7 +61,6 @@ class UserController extends Controller
         $updateRules = [
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,{id}',
-            'password' => 'sometimes|string|min:8',
             'role' => 'sometimes|in:ADMIN,STAFF,STUDENT,FACULTY',
             'active' => 'sometimes|boolean',
             'student_id' => 'nullable|string',
@@ -77,10 +76,20 @@ class UserController extends Controller
             $updateRules[$field] = str_replace('{id}', $id, $rule);
         }
 
+        // Only add password validation rules if password is provided
+        if ($request->filled('password')) {
+            $updateRules['password'] = 'required|string|min:8';
+            $updateRules['password_confirmation'] = 'required|string|same:password';
+        }
+
         $validated = $request->validate($updateRules);
 
-        if (isset($validated['password'])) {
+        // Only hash and update password if it's provided and not empty
+        if ($request->filled('password')) {
             $validated['password'] = Hash::make($validated['password']);
+        } else {
+            // Remove password from validated data to retain old password
+            unset($validated['password']);
         }
 
         $record->update($validated);
