@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -34,12 +35,20 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => ['required', 'email', Rule::unique('users', 'email')],
             'password' => 'required|string|min:8',
             'role' => 'required|in:ADMIN,STAFF,STUDENT,FACULTY',
             'active' => 'boolean',
-            'student_id' => 'nullable|string',
-            'faculty_id' => 'nullable|string',
+            'student_id' => [
+                'nullable',
+                'string',
+                Rule::unique('users', 'student_id')->where(fn ($query) => $query->where('role', 'STUDENT')),
+            ],
+            'faculty_id' => [
+                'nullable',
+                'string',
+                Rule::unique('users', 'faculty_id')->where(fn ($query) => $query->where('role', 'FACULTY')),
+            ],
             'course' => 'nullable|string',
             'year_level' => 'nullable|integer',
             'attendance_rate' => 'nullable|numeric',
@@ -66,21 +75,32 @@ class UserController extends Controller
 
         $updateRules = [
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,{id}',
+            'email' => [
+                'sometimes',
+                'email',
+                Rule::unique('users', 'email')->ignore($id),
+            ],
             'role' => 'sometimes|in:ADMIN,STAFF,STUDENT,FACULTY',
             'active' => 'sometimes|boolean',
-            'student_id' => 'nullable|string',
-            'faculty_id' => 'nullable|string',
+            'student_id' => [
+                'nullable',
+                'string',
+                Rule::unique('users', 'student_id')
+                    ->ignore($id)
+                    ->where(fn ($query) => $query->where('role', 'STUDENT')),
+            ],
+            'faculty_id' => [
+                'nullable',
+                'string',
+                Rule::unique('users', 'faculty_id')
+                    ->ignore($id)
+                    ->where(fn ($query) => $query->where('role', 'FACULTY')),
+            ],
             'course' => 'nullable|string',
             'year_level' => 'nullable|integer',
             'attendance_rate' => 'nullable|numeric',
             'department' => 'nullable|string',
         ];
-
-        // Replace {id} placeholder in unique rules
-        foreach ($updateRules as $field => $rule) {
-            $updateRules[$field] = str_replace('{id}', $id, $rule);
-        }
 
         // Only add password validation rules if password is provided
         if ($request->filled('password')) {
