@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SchedulePeriodController;
 use App\Http\Controllers\Api\ClassSessionController;
+use App\Http\Controllers\Api\StudentScheduleController;
 use App\Http\Controllers\Api\UserAccessLogController;
 use App\Http\Controllers\Api\UserAuditLogController;
 use App\Http\Controllers\Api\DeviceBoardController;
@@ -52,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('schedules/count', [ScheduleController::class, 'count']);
     Route::get('schedule-periods/count', [SchedulePeriodController::class, 'count']);
     Route::get('class-sessions/count', [ClassSessionController::class, 'count']);
+    Route::get('student-schedules/count', [StudentScheduleController::class, 'count']);
     Route::get('user-access-logs/count', [UserAccessLogController::class, 'count']);
     Route::get('user-audit-logs/count', [UserAuditLogController::class, 'count']);
 
@@ -85,6 +87,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Class Sessions API
     Route::post('class-sessions/{class_session}/close', [ClassSessionController::class, 'close']);
     Route::apiResource("class-sessions", ClassSessionController::class);
+
+    // Student Schedules API
+    Route::apiResource("student-schedules", StudentScheduleController::class);
 
     // User Access Logs API
     Route::apiResource("user-access-logs", UserAccessLogController::class)->except(["update"]);
