@@ -34,6 +34,7 @@ trait ApiResponse
         $response = [
             'status' => false,
             'message' => $message,
+            'datetime' => now(),
         ];
 
         if (!empty($errors)) {
