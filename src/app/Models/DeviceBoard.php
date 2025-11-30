@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
-class DeviceBoard extends Model
+class DeviceBoard extends Authenticatable
 {
     use HasFactory;
+    use HasApiTokens;
+    use Notifiable;
 
     protected $fillable = [
         'device_id',
@@ -40,6 +44,21 @@ class DeviceBoard extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (DeviceBoard $deviceBoard) {
+            $deviceBoard->ensureApiToken();
+        });
+
+        static::updating(function (DeviceBoard $deviceBoard) {
+            $deviceBoard->ensureApiToken();
+        });
+
+        static::saved(function (DeviceBoard $deviceBoard) {
+            $deviceBoard->syncSanctumToken();
+        });
+    }
+
     /**
      * Get the device that owns this board.
      */
@@ -48,18 +67,26 @@ class DeviceBoard extends Model
         return $this->belongsTo(Device::class);
     }
 
-    protected static function booted(): void
+    protected function ensureApiToken(): void
     {
-        static::creating(function (DeviceBoard $deviceBoard) {
-            if (empty($deviceBoard->attributes['api_token'] ?? null)) {
-                $deviceBoard->api_token = Str::random(64);
-            }
-        });
+        if (empty($this->api_token)) {
+            $this->api_token = Str::random(64);
+        }
+    }
 
-        static::updating(function (DeviceBoard $deviceBoard) {
-            if (empty($deviceBoard->attributes['api_token'] ?? null)) {
-                $deviceBoard->api_token = Str::random(64);
-            }
-        });
+    public function syncSanctumToken(): void
+    {
+        if (empty($this->api_token)) {
+            return;
+        }
+
+        // Maintain a single stateless token per board for hardware communication.
+        $this->tokens()->delete();
+
+        $this->tokens()->create([
+            'name' => 'device-board-api-token',
+            'token' => hash('sha256', $this->api_token),
+            'abilities' => ['device-board:communicate'],
+        ]);
     }
 }

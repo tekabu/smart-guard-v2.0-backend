@@ -17,8 +17,8 @@ class SchedulePeriodController extends Controller
         $query = SchedulePeriod::query()->with(['schedule']);
         
         // Filter by schedule_id if provided
-        if ($request->has('schedule')) {
-            $query->where('schedule_id', $request->input('schedule'));
+        if ($request->has('schedule_id')) {
+            $query->where('schedule_id', $request->input('schedule_id'));
         }
         
         $records = $query->get();

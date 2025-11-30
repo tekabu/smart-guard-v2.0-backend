@@ -357,19 +357,19 @@ class SchedulePeriodControllerTest extends TestCase
         $period3 = SchedulePeriod::factory()->create(['schedule_id' => $schedule2->id]);
         
         // Test filtering by schedule1
-        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule=' . $schedule1->id);
+        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule_id=' . $schedule1->id);
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonCount(2, 'data');
             
         // Test filtering by schedule2
-        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule=' . $schedule2->id);
+        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule_id=' . $schedule2->id);
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonCount(1, 'data');
             
         // Test with non-existent schedule ID
-        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule=99999');
+        $response = $this->actingAs($user)->getJson('/api/schedule-periods?schedule_id=99999');
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonCount(0, 'data');

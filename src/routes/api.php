@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\ClassSessionController;
 use App\Http\Controllers\Api\UserAccessLogController;
 use App\Http\Controllers\Api\UserAuditLogController;
 use App\Http\Controllers\Api\DeviceBoardController;
+use App\Http\Controllers\Api\DeviceCommunicationController;
+use App\Http\Middleware\EnsureDeviceBoard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +26,13 @@ Route::get('health', [HealthController::class, 'check']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+
+Route::prefix('device-communications')
+    ->middleware(['auth:sanctum', EnsureDeviceBoard::class])
+    ->group(function () {
+        Route::post('heartbeat', [DeviceCommunicationController::class, 'heartbeat']);
+        Route::get('me', [DeviceCommunicationController::class, 'me']);
+    });
 
 Route::middleware('auth:sanctum')->group(function () {
     // Count endpoints
