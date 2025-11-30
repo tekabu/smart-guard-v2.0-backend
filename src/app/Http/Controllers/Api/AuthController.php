@@ -70,4 +70,77 @@ class AuthController extends Controller
     {
         return $this->successResponse($request->user());
     }
+
+    /**
+     * Create API token for admin user
+     */
+    public function createToken(Request $request)
+    {
+        $request->validate([
+            'token_name' => 'required|string|max:255',
+        ]);
+
+        $user = $request->user();
+        
+        if ($user->role !== 'ADMIN') {
+            return $this->errorResponse('Only admin users can create API tokens.', 403);
+        }
+
+        $token = $user->createToken($request->token_name, ['*']);
+
+        return $this->successResponse([
+            'token' => $token->plainTextToken,
+            'abilities' => $token->accessToken->abilities,
+        ]);
+    }
+
+    /**
+     * List all tokens for the authenticated user
+     */
+    public function listTokens(Request $request)
+    {
+        $user = $request->user();
+        
+        if ($user->role !== 'ADMIN') {
+            return $this->errorResponse('Only admin users can list API tokens.', 403);
+        }
+
+        $tokens = $user->tokens()->get()->map(function ($token) {
+            return [
+                'id' => $token->id,
+                'name' => $token->name,
+                'abilities' => $token->abilities,
+                'created_at' => $token->created_at,
+                'last_used_at' => $token->last_used_at,
+                'expires_at' => $token->expires_at,
+                'deleted_at' => $token->deleted_at,
+            ];
+        });
+
+        return $this->successResponse($tokens);
+    }
+
+    /**
+     * Revoke a specific token
+     */
+    public function revokeToken(Request $request, $tokenId)
+    {
+        $user = $request->user();
+        
+        if ($user->role !== 'ADMIN') {
+            return $this->errorResponse('Only admin users can revoke API tokens.', 403);
+        }
+
+        $token = $user->tokens()->find($tokenId);
+        
+        if (!$token) {
+            return $this->errorResponse('Token not found.', 404);
+        }
+
+        $token->delete();
+
+        return $this->successResponse([
+            'message' => 'Token revoked successfully',
+        ]);
+    }
 }

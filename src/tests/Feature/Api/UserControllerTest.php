@@ -74,6 +74,46 @@ class UserControllerTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'john@example.com', 'role' => 'STUDENT']);
     }
 
+    public function test_can_create_student_without_password()
+    {
+        $actingUser = User::factory()->create();
+        $payload = [
+            'name' => 'No Password Student',
+            'email' => 'nopass.student@example.com',
+            'role' => 'STUDENT',
+            'student_id' => 'STU-OPTIONAL-001',
+        ];
+
+        $response = $this->actingAs($actingUser)->postJson('/api/users', $payload);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.email', 'nopass.student@example.com');
+
+        $createdUser = User::where('email', 'nopass.student@example.com')->first();
+        $this->assertNotNull($createdUser);
+        $this->assertNull($createdUser->password);
+    }
+
+    public function test_can_create_faculty_without_password()
+    {
+        $actingUser = User::factory()->create();
+        $payload = [
+            'name' => 'No Password Faculty',
+            'email' => 'nopass.faculty@example.com',
+            'role' => 'FACULTY',
+            'faculty_id' => 'FAC-OPTIONAL-001',
+        ];
+
+        $response = $this->actingAs($actingUser)->postJson('/api/users', $payload);
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.email', 'nopass.faculty@example.com');
+
+        $createdUser = User::where('email', 'nopass.faculty@example.com')->first();
+        $this->assertNotNull($createdUser);
+        $this->assertNull($createdUser->password);
+    }
+
     public function test_can_show_user()
     {
         $user = User::factory()->create(); // Acting user
@@ -167,8 +207,21 @@ class UserControllerTest extends TestCase
     public function test_requires_name_email_password_role()
     {
         $user = User::factory()->create(); // Acting user
-        $response = $this->actingAs($user)->postJson('/api/users', []);
-        $response->assertStatus(422)->assertJsonValidationErrors(['name', 'email', 'password', 'role']);
+        $response = $this->actingAs($user)->postJson('/api/users', ['role' => 'ADMIN']);
+        $response->assertStatus(422)->assertJsonValidationErrors(['name', 'email', 'password']);
+    }
+
+    public function test_requires_role_field()
+    {
+        $user = User::factory()->create(); // Acting user
+        $payload = [
+            'name' => 'Missing Role',
+            'email' => 'missing-role@example.com',
+            'password' => 'password123',
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/users', $payload);
+        $response->assertStatus(422)->assertJsonValidationErrors(['role']);
     }
 
     public function test_show_user_that_does_not_exist()

@@ -28,6 +28,13 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
+// Token Management API (admin only)
+Route::prefix('tokens')->middleware('auth:sanctum')->group(function () {
+    Route::post('/', [AuthController::class, 'createToken']);
+    Route::get('/', [AuthController::class, 'listTokens']);
+    Route::delete('{tokenId}', [AuthController::class, 'revokeToken']);
+});
+
 Route::prefix('device-communications')
     ->middleware(['auth:sanctum', EnsureDeviceBoard::class])
     ->group(function () {

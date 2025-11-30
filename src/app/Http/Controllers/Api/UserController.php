@@ -36,7 +36,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users', 'email')],
-            'password' => 'required|string|min:8',
+            'password' => 'nullable|string|min:8|required_unless:role,STUDENT,FACULTY',
             'role' => 'required|in:ADMIN,STAFF,STUDENT,FACULTY',
             'active' => 'boolean',
             'student_id' => [
