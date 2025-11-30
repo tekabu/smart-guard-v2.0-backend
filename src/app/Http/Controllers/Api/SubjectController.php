@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
+use Illuminate\Validation\Rule;
 
 class SubjectController extends Controller
 {
@@ -26,7 +27,11 @@ class SubjectController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'subject' => 'required|string|unique:subjects,subject',
+            'subject' => [
+                'required',
+                'string',
+                Rule::unique('subjects', 'subject'),
+            ],
             'active' => 'boolean',
         ]);
 
@@ -45,14 +50,13 @@ class SubjectController extends Controller
         $record = Subject::findOrFail($id);
 
         $updateRules = [
-            'subject' => 'sometimes|string|unique:subjects,subject,{id}',
+            'subject' => [
+                'sometimes',
+                'string',
+                Rule::unique('subjects', 'subject')->ignore($id),
+            ],
             'active' => 'sometimes|boolean',
         ];
-
-        // Replace {id} placeholder in unique rules
-        foreach ($updateRules as $field => $rule) {
-            $updateRules[$field] = str_replace('{id}', $id, $rule);
-        }
 
         $validated = $request->validate($updateRules);
 
