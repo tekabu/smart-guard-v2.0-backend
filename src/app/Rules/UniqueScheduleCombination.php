@@ -8,36 +8,36 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class UniqueScheduleCombination implements ValidationRule
 {
-    protected ;
+    protected $scheduleId;
 
-    public function __construct( = null)
+    public function __construct($scheduleId = null)
     {
-        ->scheduleId = ;
+        $this->scheduleId = $scheduleId;
     }
 
-    public function validate(string , mixed , Closure ): void
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         // Only validate when we have all required field values
-         = request('user_id');
-         = request('day_of_week');
-         = request('room_id');
-         = request('subject_id');
+        $userId = request('user_id');
+        $dayOfWeek = request('day_of_week');
+        $roomId = request('room_id');
+        $subjectId = request('subject_id');
 
         // Check if all required fields are present before validating uniqueness
-        if ( &&  &&  && ) {
+        if ($userId && $dayOfWeek && $roomId && $subjectId) {
             // Build the query to check for existing records with the same combination
-             = Schedule::where('user_id', )
-                             ->where('day_of_week', )
-                             ->where('room_id', )
-                             ->where('subject_id', );
+            $query = Schedule::where('user_id', $userId)
+                            ->where('day_of_week', $dayOfWeek)
+                            ->where('room_id', $roomId)
+                            ->where('subject_id', $subjectId);
 
             // If updating, exclude the current record
-            if (->scheduleId) {
-                ->where('id', '!=', ->scheduleId);
+            if ($this->scheduleId) {
+                $query->where('id', '!=', $this->scheduleId);
             }
 
-            if (->exists()) {
-                ('A schedule with the same user, day of week, room, and subject already exists.');
+            if ($query->exists()) {
+                $fail('A schedule with the same user, day of week, room, and subject already exists.');
             }
         }
     }

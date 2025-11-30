@@ -43,8 +43,8 @@ class SchedulePeriodController extends Controller
 
         $updateRules = [
             'schedule_id' => 'sometimes|exists:schedules,id',
-            'start_time' => ['sometimes', 'date_format:H:i:s', new NoScheduleOverlap($id, $record->schedule_id)],
-            'end_time' => ['sometimes', 'date_format:H:i:s', 'after:start_time', new NoScheduleOverlap($id, $record->schedule_id)],
+            'start_time' => ['sometimes', 'date_format:H:i:s', new NoScheduleOverlap($id)],
+            'end_time' => ['sometimes', 'date_format:H:i:s', 'after:start_time', new NoScheduleOverlap($id)],
             'active' => 'sometimes|boolean',
         ];
 

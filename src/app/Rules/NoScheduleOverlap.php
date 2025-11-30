@@ -21,7 +21,15 @@ class NoScheduleOverlap implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         // Get the schedule_id from the request data or from the existing record
-        $scheduleId = $this->currentScheduleId ?? request('schedule_id');
+        $scheduleId = request('schedule_id');
+        
+        // If no schedule_id in request, try to get it from the existing record
+        if (!$scheduleId && $this->schedulePeriodId) {
+            $currentRecord = SchedulePeriod::find($this->schedulePeriodId);
+            if ($currentRecord) {
+                $scheduleId = $currentRecord->schedule_id;
+            }
+        }
         
         if (!$scheduleId) {
             return; // If no schedule id, can't do overlap check
@@ -33,8 +41,34 @@ class NoScheduleOverlap implements ValidationRule
             return; // If schedule doesn't exist, validation will catch this elsewhere
         }
 
-        $newStartTime = request('start_time');
-        $newEndTime = request('end_time');
+        // Get the time values from request
+        $requestStartTime = request('start_time');
+        $requestEndTime = request('end_time');
+        
+        // For updates, we need to get the current record to use as fallback
+        $currentRecord = null;
+        if ($this->schedulePeriodId) {
+            $currentRecord = SchedulePeriod::find($this->schedulePeriodId);
+        }
+        
+        // Determine the new start and end times
+        // Use validated value for the current attribute, request for the other
+        if ($attribute === 'start_time') {
+            $newStartTime = $value;
+            $newEndTime = $requestEndTime ?: ($currentRecord ? $currentRecord->end_time : null);
+        } elseif ($attribute === 'end_time') {
+            $newStartTime = $requestStartTime ?: ($currentRecord ? $currentRecord->start_time : null);
+            $newEndTime = $value;
+        } else {
+            // For other validations, get both from request or current record
+            $newStartTime = $requestStartTime ?: ($currentRecord ? $currentRecord->start_time : null);
+            $newEndTime = $requestEndTime ?: ($currentRecord ? $currentRecord->end_time : null);
+        }
+
+        // If we don't have both times, we can't check overlap
+        if (!$newStartTime || !$newEndTime) {
+            return;
+        }
 
         // If updating, exclude the current record from the check
         $query = SchedulePeriod::whereHas('schedule', function($query) use ($schedule) {

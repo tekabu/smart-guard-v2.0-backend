@@ -40,35 +40,35 @@ class DeviceBoardFactory extends Factory
     public function fingerprint(): static
     {
         return $this->state(fn (array $attributes) => [
-            'board_type' => 'fingerprint',
+            'board_type' => 'FINGERPRINT',
         ]);
     }
 
     public function rfid(): static
     {
         return $this->state(fn (array $attributes) => [
-            'board_type' => 'rfid',
+            'board_type' => 'RFID',
         ]);
     }
 
     public function lock(): static
     {
         return $this->state(fn (array $attributes) => [
-            'board_type' => 'lock',
+            'board_type' => 'LOCK',
         ]);
     }
 
     public function camera(): static
     {
         return $this->state(fn (array $attributes) => [
-            'board_type' => 'camera',
+            'board_type' => 'CAMERA',
         ]);
     }
 
     public function display(): static
     {
         return $this->state(fn (array $attributes) => [
-            'board_type' => 'display',
+            'board_type' => 'DISPLAY',
         ]);
     }
 }

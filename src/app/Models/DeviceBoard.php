@@ -13,7 +13,6 @@ class DeviceBoard extends Authenticatable
 
     protected $fillable = [
         'device_id',
-        'board_id',
         'board_type',
         'mac_address',
         'firmware_version',

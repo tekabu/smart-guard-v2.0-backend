@@ -23,7 +23,7 @@ class User extends Authenticatable
         'password',
         'role',
         'active',
-        'last_access_at',
+        'last_accessed_at',
         'student_id',
         'faculty_id',
         'course',
@@ -53,7 +53,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'active' => 'boolean',
-            'last_access_at' => 'datetime',
+            'last_accessed_at' => 'datetime',
             'attendance_rate' => 'decimal:2',
         ];
     }
