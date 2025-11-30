@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SchedulePeriodController;
+use App\Http\Controllers\Api\ClassSessionController;
 use App\Http\Controllers\Api\UserAccessLogController;
 use App\Http\Controllers\Api\UserAuditLogController;
 use App\Http\Controllers\Api\DeviceBoardController;
@@ -51,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Schedule Periods API
     Route::apiResource("schedule-periods", SchedulePeriodController::class);
+
+    // Class Sessions API
+    Route::apiResource("class-sessions", ClassSessionController::class);
 
     // User Access Logs API
     Route::apiResource("user-access-logs", UserAccessLogController::class)->except(["update"]);
