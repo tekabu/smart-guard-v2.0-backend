@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\ClassSessionController;
 use App\Http\Controllers\Api\StudentScheduleController;
 use App\Http\Controllers\Api\UserAccessLogController;
 use App\Http\Controllers\Api\UserAuditLogController;
+use App\Http\Controllers\Api\SectionController;
+use App\Http\Controllers\Api\SectionSubjectController;
+use App\Http\Controllers\Api\SectionSubjectStudentController;
 use App\Http\Controllers\Api\DeviceBoardController;
 use App\Http\Controllers\Api\DeviceCommunicationController;
 use App\Http\Middleware\EnsureDeviceBoard;
@@ -85,6 +88,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Subjects API
     Route::apiResource("subjects", SubjectController::class);
+    // Sections API
+    Route::apiResource("sections", SectionController::class);
+    Route::get('section-subjects/options', [SectionSubjectController::class, 'options']);
+    Route::apiResource("section-subjects", SectionSubjectController::class);
+    Route::apiResource("section-subject-students", SectionSubjectStudentController::class);
 
     // Schedules API
     Route::apiResource("schedules", ScheduleController::class);
