@@ -125,4 +125,56 @@ class DeviceControllerTest extends TestCase
             ->assertJsonStructure(['status', 'data' => ['count']])
             ->assertJsonPath('data.count', 6);
     }
+
+    public function test_api_token_is_generated_on_create()
+    {
+        $user = User::factory()->create();
+        $deviceData = ['device_id' => 'DEV-TOKEN-001', 'door_open_duration_seconds' => 5, 'active' => true];
+
+        $response = $this->actingAs($user)->postJson('/api/devices', $deviceData);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data' => ['api_token']]);
+
+        $apiToken = $response->json('data.api_token');
+        $this->assertNotNull($apiToken);
+        $this->assertEquals(64, strlen($apiToken));
+        $this->assertDatabaseHas('devices', ['device_id' => 'DEV-TOKEN-001', 'api_token' => $apiToken]);
+    }
+
+    public function test_api_token_is_unique_for_each_device()
+    {
+        $user = User::factory()->create();
+
+        $device1Data = ['device_id' => 'DEV-001', 'door_open_duration_seconds' => 5];
+        $device2Data = ['device_id' => 'DEV-002', 'door_open_duration_seconds' => 5];
+
+        $response1 = $this->actingAs($user)->postJson('/api/devices', $device1Data);
+        $response2 = $this->actingAs($user)->postJson('/api/devices', $device2Data);
+
+        $token1 = $response1->json('data.api_token');
+        $token2 = $response2->json('data.api_token');
+
+        $this->assertNotNull($token1);
+        $this->assertNotNull($token2);
+        $this->assertNotEquals($token1, $token2);
+    }
+
+    public function test_api_token_can_be_manually_set()
+    {
+        $user = User::factory()->create();
+        $customToken = 'custom-token-12345678901234567890123456789012345678901234567890';
+        $deviceData = [
+            'device_id' => 'DEV-CUSTOM-001',
+            'api_token' => $customToken,
+            'door_open_duration_seconds' => 5
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/devices', $deviceData);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.api_token', $customToken);
+
+        $this->assertDatabaseHas('devices', ['device_id' => 'DEV-CUSTOM-001', 'api_token' => $customToken]);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Traits\ApiResponse;
 use App\Models\DeviceBoard;
+use App\Rules\UniqueMacAddress;
 use Illuminate\Http\Request;
 
 class DeviceBoardController extends Controller
@@ -45,7 +46,7 @@ class DeviceBoardController extends Controller
         $validated = $request->validate([
             'device_id' => 'required|exists:devices,id',
             'board_type' => 'required|in:FINGERPRINT,RFID,LOCK,CAMERA,DISPLAY',
-            'mac_address' => 'required|string|unique:device_boards,mac_address',
+            'mac_address' => ['nullable', 'string', new UniqueMacAddress()],
             'firmware_version' => 'nullable|string',
             'active' => 'boolean',
         ]);
@@ -67,7 +68,7 @@ class DeviceBoardController extends Controller
         $updateRules = [
             'device_id' => 'sometimes|exists:devices,id',
             'board_type' => 'sometimes|in:FINGERPRINT,RFID,LOCK,CAMERA,DISPLAY',
-            'mac_address' => 'sometimes|string|unique:device_boards,mac_address,' . $id,
+            'mac_address' => ['nullable', 'string', new UniqueMacAddress((int)$id)],
             'firmware_version' => 'nullable|string',
             'active' => 'sometimes|boolean',
         ];

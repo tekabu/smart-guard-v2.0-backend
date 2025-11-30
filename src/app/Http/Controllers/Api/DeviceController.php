@@ -27,6 +27,7 @@ class DeviceController extends Controller
     {
         $validated = $request->validate([
             'device_id' => 'required|string|unique:devices,device_id',
+            'api_token' => 'nullable|string|max:80|unique:devices,api_token',
             'door_open_duration_seconds' => 'nullable|integer|min:1',
             'active' => 'boolean',
             'last_seen_at' => 'nullable|date',

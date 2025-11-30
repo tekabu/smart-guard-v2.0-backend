@@ -90,6 +90,27 @@ class DeviceBoardControllerTest extends TestCase
         $response->assertStatus(422)->assertJsonValidationErrors(['board_type']);
     }
 
+    public function test_can_create_device_board_without_mac_address()
+    {
+        $user = User::factory()->create(); // Acting user
+        $device = Device::factory()->create();
+        
+        $boardData = [
+            'device_id' => $device->id,
+            'board_type' => 'FINGERPRINT',
+            'firmware_version' => 'v1.2.3',
+            'active' => true,
+        ];
+        
+        $response = $this->actingAs($user)->postJson('/api/device-boards', $boardData);
+        
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.device_id', $device->id)
+            ->assertJsonPath('data.board_type', 'FINGERPRINT')
+            ->assertJsonPath('data.mac_address', null);
+    }
+
     public function test_cannot_create_device_board_with_duplicate_mac_address()
     {
         $user = User::factory()->create(); // Acting user
@@ -105,15 +126,6 @@ class DeviceBoardControllerTest extends TestCase
         $response = $this->actingAs($user)->postJson('/api/device-boards', $boardData);
         
         $response->assertStatus(422)->assertJsonValidationErrors(['mac_address']);
-    }
-
-    public function test_requires_device_id_and_board_type_and_mac_address()
-    {
-        $user = User::factory()->create(); // Acting user
-        $response = $this->actingAs($user)->postJson('/api/device-boards', []);
-        
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['device_id', 'board_type', 'mac_address']);
     }
 
     public function test_can_show_device_board()
@@ -179,6 +191,35 @@ class DeviceBoardControllerTest extends TestCase
             'active' => false,
             'firmware_version' => 'v2.0.0',
         ]);
+    }
+
+    public function test_can_create_device_board_with_null_mac_address()
+    {
+        $user = User::factory()->create(); // Acting user
+        $device = Device::factory()->create();
+        
+        $boardData = [
+            'device_id' => $device->id,
+            'board_type' => 'FINGERPRINT',
+            'mac_address' => null,
+        ];
+        
+        $response = $this->actingAs($user)->postJson('/api/device-boards', $boardData);
+        
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.device_id', $device->id)
+            ->assertJsonPath('data.board_type', 'FINGERPRINT')
+            ->assertJsonPath('data.mac_address', null);
+    }
+
+    public function test_requires_device_id_and_board_type()
+    {
+        $user = User::factory()->create(); // Acting user
+        $response = $this->actingAs($user)->postJson('/api/device-boards', []);
+        
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['device_id', 'board_type']);
     }
 
     public function test_update_device_board_with_duplicate_mac_address()

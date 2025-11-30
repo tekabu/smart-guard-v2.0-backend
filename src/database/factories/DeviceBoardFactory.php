@@ -71,4 +71,11 @@ class DeviceBoardFactory extends Factory
             'board_type' => 'DISPLAY',
         ]);
     }
+
+    public function withoutMacAddress(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'mac_address' => null,
+        ]);
+    }
 }

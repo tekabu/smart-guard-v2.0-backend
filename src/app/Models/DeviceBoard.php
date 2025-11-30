@@ -21,6 +21,16 @@ class DeviceBoard extends Authenticatable
         'last_ip',
     ];
 
+    public static $rules = [
+        'device_id' => 'required|exists:devices,id',
+        'board_type' => 'required|in:FINGERPRINT,RFID,LOCK,CAMERA,DISPLAY',
+        'mac_address' => 'nullable|string|unique:device_boards,mac_address,NULL,id,deleted_at,NULL',
+        'firmware_version' => 'nullable|string',
+        'active' => 'boolean',
+        'last_seen_at' => 'nullable|date',
+        'last_ip' => 'nullable|string',
+    ];
+
     protected function casts(): array
     {
         return [
