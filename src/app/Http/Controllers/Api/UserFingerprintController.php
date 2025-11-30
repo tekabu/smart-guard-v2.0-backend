@@ -11,9 +11,15 @@ class UserFingerprintController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function index(Request $request)
     {
-        $records = UserFingerprint::query()->with(['user'])->get();
+        $query = UserFingerprint::query()->with(['user']);
+        
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->input('user_id'));
+        }
+        
+        $records = $query->get();
         return $this->successResponse($records);
     }
 

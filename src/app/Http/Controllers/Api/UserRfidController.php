@@ -11,9 +11,16 @@ class UserRfidController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function index(Request $request)
     {
-        $records = UserRfid::query()->with(['user'])->get();
+        $query = UserRfid::query()->with(['user']);
+        
+        // Apply user_id filter if provided
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->input('user_id'));
+        }
+        
+        $records = $query->get();
         return $this->successResponse($records);
     }
 
