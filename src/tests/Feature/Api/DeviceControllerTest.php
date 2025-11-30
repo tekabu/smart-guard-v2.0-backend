@@ -108,10 +108,21 @@ class DeviceControllerTest extends TestCase
         $user = User::factory()->create(); // Acting user
         $device1 = Device::factory()->create(['device_id' => 'DEVICE-001']);
         $device2 = Device::factory()->create(['device_id' => 'DEVICE-002']);
-        
+
         // Try to update device1 to use device2's device_id (which already exists)
         $updateData = ['device_id' => 'DEVICE-002'];
         $response = $this->actingAs($user)->putJson('/api/devices/' . $device1->id, $updateData);
         $response->assertStatus(422)->assertJsonValidationErrors(['device_id']);
+    }
+
+    public function test_can_get_devices_count()
+    {
+        $user = User::factory()->create();
+        Device::factory()->count(6)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/devices/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 6);
     }
 }

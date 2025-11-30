@@ -218,7 +218,18 @@ class DeviceBoardControllerTest extends TestCase
     {
         $user = User::factory()->create(); // Acting user
         $response = $this->actingAs($user)->deleteJson('/api/device-boards/99999');
-        
+
         $response->assertStatus(404);
+    }
+
+    public function test_can_get_device_boards_count()
+    {
+        $user = User::factory()->create();
+        DeviceBoard::factory()->count(9)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/device-boards/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 9);
     }
 }

@@ -107,10 +107,21 @@ class SubjectControllerTest extends TestCase
         $user = User::factory()->create(); // Acting user
         $subject1 = Subject::factory()->create(['subject' => 'Physics']);
         $subject2 = Subject::factory()->create(['subject' => 'Chemistry']);
-        
+
         // Try to update subject1 to use subject2's name (which already exists)
         $updateData = ['subject' => 'Chemistry'];
         $response = $this->actingAs($user)->putJson('/api/subjects/' . $subject1->id, $updateData);
         $response->assertStatus(422)->assertJsonValidationErrors(['subject']);
+    }
+
+    public function test_can_get_subjects_count()
+    {
+        $user = User::factory()->create();
+        Subject::factory()->count(8)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/subjects/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 8);
     }
 }

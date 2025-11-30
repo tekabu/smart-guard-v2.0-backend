@@ -110,10 +110,21 @@ class RoomControllerTest extends TestCase
         $user = User::factory()->create(); // Acting user
         $room1 = Room::factory()->create(['room_number' => '101']);
         $room2 = Room::factory()->create(['room_number' => '102']);
-        
+
         // Try to update room2 to use room1's room number (which already exists)
         $updateData = ['room_number' => '101'];
         $response = $this->actingAs($user)->putJson('/api/rooms/' . $room2->id, $updateData);
         $response->assertStatus(422)->assertJsonValidationErrors(['room_number']);
+    }
+
+    public function test_can_get_rooms_count()
+    {
+        $user = User::factory()->create();
+        Room::factory()->count(5)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/rooms/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 5);
     }
 }

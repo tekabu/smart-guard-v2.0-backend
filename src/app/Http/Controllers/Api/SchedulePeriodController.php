@@ -18,6 +18,12 @@ class SchedulePeriodController extends Controller
         return $this->successResponse($records);
     }
 
+    public function count()
+    {
+        $count = SchedulePeriod::count();
+        return $this->successResponse(['count' => $count]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

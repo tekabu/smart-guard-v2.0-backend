@@ -331,4 +331,15 @@ class SchedulePeriodControllerTest extends TestCase
         $response6 = $this->actingAs($user)->postJson('/api/schedule-periods', $periodData6);
         $response6->assertStatus(201);
     }
+
+    public function test_can_get_schedule_periods_count()
+    {
+        $user = User::factory()->create();
+        SchedulePeriod::factory()->count(10)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/schedule-periods/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 10);
+    }
 }

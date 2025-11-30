@@ -110,10 +110,21 @@ class UserFingerprintControllerTest extends TestCase
         $user = User::factory()->create();
         $fingerprint1 = UserFingerprint::factory()->create(['fingerprint_id' => 11111]);
         $fingerprint2 = UserFingerprint::factory()->create(['fingerprint_id' => 22222]);
-        
+
         // Try to update fingerprint1 to use fingerprint2's fingerprint_id (which already exists)
         $updateData = ['fingerprint_id' => 22222];
         $response = $this->actingAs($authUser)->putJson('/api/user-fingerprints/' . $fingerprint1->id, $updateData);
         $response->assertStatus(422)->assertJsonValidationErrors(['fingerprint_id']);
+    }
+
+    public function test_can_get_user_fingerprints_count()
+    {
+        $user = User::factory()->create();
+        UserFingerprint::factory()->count(12)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/user-fingerprints/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 12);
     }
 }

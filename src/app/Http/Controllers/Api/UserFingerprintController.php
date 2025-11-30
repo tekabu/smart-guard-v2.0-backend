@@ -17,6 +17,12 @@ class UserFingerprintController extends Controller
         return $this->successResponse($records);
     }
 
+    public function count()
+    {
+        $count = UserFingerprint::count();
+        return $this->successResponse(['count' => $count]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

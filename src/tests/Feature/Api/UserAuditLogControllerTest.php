@@ -62,4 +62,15 @@ class UserAuditLogControllerTest extends TestCase
         $response = $this->actingAs($user)->postJson("/api/user-audit-logs", []);
         $response->assertStatus(422)->assertJsonValidationErrors(["user_id", "description"]);
     }
+
+    public function test_can_get_user_audit_logs_count()
+    {
+        $user = User::factory()->create();
+        UserAuditLog::factory()->count(13)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/user-audit-logs/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 13);
+    }
 }

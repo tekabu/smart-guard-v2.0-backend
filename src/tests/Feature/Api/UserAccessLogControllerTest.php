@@ -87,4 +87,15 @@ class UserAccessLogControllerTest extends TestCase
         $response = $this->actingAs($user)->postJson("/api/user-access-logs", []);
         $response->assertStatus(422)->assertJsonValidationErrors(["user_id", "room_id", "device_id", "access_used"]);
     }
+
+    public function test_can_get_user_access_logs_count()
+    {
+        $user = User::factory()->create();
+        UserAccessLog::factory()->count(15)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/user-access-logs/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 15);
+    }
 }

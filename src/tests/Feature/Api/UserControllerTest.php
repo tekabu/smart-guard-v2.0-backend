@@ -240,4 +240,15 @@ class UserControllerTest extends TestCase
         $updatedUser = User::find($updateUser->id);
         $this->assertTrue(\Hash::check('original_password', $updatedUser->password));
     }
+
+    public function test_can_get_users_count()
+    {
+        $user = User::factory()->create();
+        User::factory()->count(5)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/users/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 6); // 5 created + 1 acting user
+    }
 }

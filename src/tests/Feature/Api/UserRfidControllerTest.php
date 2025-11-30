@@ -110,10 +110,21 @@ class UserRfidControllerTest extends TestCase
         $user = User::factory()->create();
         $rfid1 = UserRfid::factory()->create(['card_id' => 'RFID001']);
         $rfid2 = UserRfid::factory()->create(['card_id' => 'RFID002']);
-        
+
         // Try to update rfid1 to use rfid2's card_id (which already exists)
         $updateData = ['card_id' => 'RFID002'];
         $response = $this->actingAs($authUser)->putJson('/api/user-rfids/' . $rfid1->id, $updateData);
         $response->assertStatus(422)->assertJsonValidationErrors(['card_id']);
+    }
+
+    public function test_can_get_user_rfids_count()
+    {
+        $user = User::factory()->create();
+        UserRfid::factory()->count(11)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/user-rfids/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 11);
     }
 }

@@ -26,6 +26,20 @@ Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanct
 Route::get('user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Count endpoints
+    Route::get('users/count', [UserController::class, 'count']);
+    Route::get('user-fingerprints/count', [UserFingerprintController::class, 'count']);
+    Route::get('user-rfids/count', [UserRfidController::class, 'count']);
+    Route::get('devices/count', [DeviceController::class, 'count']);
+    Route::get('device-boards/count', [DeviceBoardController::class, 'count']);
+    Route::get('rooms/count', [RoomController::class, 'count']);
+    Route::get('subjects/count', [SubjectController::class, 'count']);
+    Route::get('schedules/count', [ScheduleController::class, 'count']);
+    Route::get('schedule-periods/count', [SchedulePeriodController::class, 'count']);
+    Route::get('class-sessions/count', [ClassSessionController::class, 'count']);
+    Route::get('user-access-logs/count', [UserAccessLogController::class, 'count']);
+    Route::get('user-audit-logs/count', [UserAuditLogController::class, 'count']);
+
     // Users API
     Route::apiResource("users", UserController::class);
 

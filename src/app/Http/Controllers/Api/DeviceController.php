@@ -17,6 +17,12 @@ class DeviceController extends Controller
         return $this->successResponse($records);
     }
 
+    public function count()
+    {
+        $count = Device::count();
+        return $this->successResponse(['count' => $count]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

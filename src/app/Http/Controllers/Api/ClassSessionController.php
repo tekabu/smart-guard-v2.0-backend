@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassSession;
+use App\Rules\UniqueClassSessionPerDay;
+use App\Rules\ValidClassSessionDay;
+use App\Rules\ValidClassSessionTime;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -17,10 +20,22 @@ class ClassSessionController extends Controller
         return $this->successResponse($records);
     }
 
+    public function count()
+    {
+        $count = ClassSession::count();
+        return $this->successResponse(['count' => $count]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'schedule_period_id' => 'required|exists:schedule_periods,id',
+            'schedule_period_id' => [
+                'required',
+                'exists:schedule_periods,id',
+                new ValidClassSessionDay,
+                new ValidClassSessionTime,
+                new UniqueClassSessionPerDay,
+            ],
             'start_time' => 'required|date_format:H:i:s',
             'end_time' => 'required|date_format:H:i:s|after:start_time',
         ]);
@@ -40,7 +55,13 @@ class ClassSessionController extends Controller
         $record = ClassSession::findOrFail($id);
 
         $validated = $request->validate([
-            'schedule_period_id' => 'sometimes|exists:schedule_periods,id',
+            'schedule_period_id' => [
+                'sometimes',
+                'exists:schedule_periods,id',
+                new ValidClassSessionDay,
+                new ValidClassSessionTime,
+                new UniqueClassSessionPerDay($id),
+            ],
             'start_time' => 'sometimes|date_format:H:i:s',
             'end_time' => 'sometimes|date_format:H:i:s|after:start_time',
         ]);

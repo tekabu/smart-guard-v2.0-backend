@@ -189,4 +189,15 @@ class ScheduleControllerTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['combination']);
     }
+
+    public function test_can_get_schedules_count()
+    {
+        $user = User::factory()->create();
+        Schedule::factory()->count(4)->create();
+
+        $response = $this->actingAs($user)->getJson('/api/schedules/count');
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data' => ['count']])
+            ->assertJsonPath('data.count', 4);
+    }
 }

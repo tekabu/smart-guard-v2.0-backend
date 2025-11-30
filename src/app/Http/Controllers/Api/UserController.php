@@ -15,13 +15,19 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
-        
+
         if ($request->has('role')) {
             $query->where('role', $request->get('role'));
         }
-        
+
         $records = $query->get();
         return $this->successResponse($records);
+    }
+
+    public function count()
+    {
+        $count = User::count();
+        return $this->successResponse(['count' => $count]);
     }
 
     public function store(Request $request)
