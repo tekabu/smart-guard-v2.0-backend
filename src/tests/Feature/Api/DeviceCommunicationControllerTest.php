@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\ClassSession;
+use App\Models\Device;
 use App\Models\DeviceBoard;
 use App\Models\Room;
 use App\Models\Schedule;
@@ -90,7 +92,8 @@ class DeviceCommunicationControllerTest extends TestCase
     public function test_device_board_can_validate_card_id()
     {
         $board = DeviceBoard::factory()->create();
-        $rfid = UserRfid::factory()->create();
+        $user = User::factory()->create(['role' => 'FACULTY']);
+        $rfid = UserRfid::factory()->create(['user_id' => $user->id]);
 
         $response = $this
             ->withHeader('Authorization', 'Bearer ' . $board->api_token)
@@ -100,13 +103,15 @@ class DeviceCommunicationControllerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.valid', true)
-            ->assertJsonPath('data.user_id', $rfid->user_id);
+            ->assertJsonPath('data.user_id', $rfid->user_id)
+            ->assertJsonPath('data.attendance_recorded', false);
     }
 
     public function test_device_board_can_validate_fingerprint_id()
     {
         $board = DeviceBoard::factory()->create();
-        $fingerprint = UserFingerprint::factory()->create();
+        $user = User::factory()->create(['role' => 'FACULTY']);
+        $fingerprint = UserFingerprint::factory()->create(['user_id' => $user->id]);
 
         $response = $this
             ->withHeader('Authorization', 'Bearer ' . $board->api_token)
@@ -116,7 +121,8 @@ class DeviceCommunicationControllerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.valid', true)
-            ->assertJsonPath('data.user_id', $fingerprint->user_id);
+            ->assertJsonPath('data.user_id', $fingerprint->user_id)
+            ->assertJsonPath('data.attendance_recorded', false);
     }
 
     public function test_device_board_can_scan_card()
@@ -220,6 +226,78 @@ class DeviceCommunicationControllerTest extends TestCase
             ->assertJsonPath('status', false);
     }
 
+    public function test_student_card_scan_records_attendance()
+    {
+        [$board, $room] = $this->prepareBoardWithRoom();
+        $subject = Subject::factory()->create();
+        $faculty = User::factory()->create(['role' => 'FACULTY']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+        $rfid = UserRfid::factory()->create(['user_id' => $student->id]);
+
+        $schedulePeriod = $this->createFacultySchedulePeriodForRoom($faculty, $room, $subject);
+        $classSession = $this->createActiveClassSession($schedulePeriod);
+        $this->createStudentSchedule($student, $room, $subject);
+
+        $response = $this
+            ->withHeader('Authorization', 'Bearer ' . $board->api_token)
+            ->postJson('/api/device-communications/validate-card', [
+                'card_id' => $rfid->card_id,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.attendance_recorded', true);
+
+        $this->assertDatabaseHas('student_attendance', [
+            'user_id' => $student->id,
+            'class_session_id' => $classSession->id,
+        ]);
+    }
+
+    public function test_student_fingerprint_scan_records_attendance()
+    {
+        [$board, $room] = $this->prepareBoardWithRoom();
+        $subject = Subject::factory()->create();
+        $faculty = User::factory()->create(['role' => 'FACULTY']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+        $fingerprint = UserFingerprint::factory()->create(['user_id' => $student->id]);
+
+        $schedulePeriod = $this->createFacultySchedulePeriodForRoom($faculty, $room, $subject);
+        $classSession = $this->createActiveClassSession($schedulePeriod);
+        $this->createStudentSchedule($student, $room, $subject);
+
+        $response = $this
+            ->withHeader('Authorization', 'Bearer ' . $board->api_token)
+            ->postJson('/api/device-communications/validate-fingerprint', [
+                'fingerprint_id' => (string) $fingerprint->fingerprint_id,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.attendance_recorded', true);
+
+        $this->assertDatabaseHas('student_attendance', [
+            'user_id' => $student->id,
+            'class_session_id' => $classSession->id,
+        ]);
+    }
+
+    public function test_student_scan_without_matching_session_returns_error()
+    {
+        [$board] = $this->prepareBoardWithRoom();
+        $student = User::factory()->create(['role' => 'STUDENT']);
+        $rfid = UserRfid::factory()->create(['user_id' => $student->id]);
+
+        $response = $this
+            ->withHeader('Authorization', 'Bearer ' . $board->api_token)
+            ->postJson('/api/device-communications/validate-card', [
+                'card_id' => $rfid->card_id,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('status', false);
+
+        $this->assertDatabaseCount('student_attendance', 0);
+    }
+
     private function prepareSchedulePeriod(User $user): SchedulePeriod
     {
         $room = Room::factory()->create();
@@ -235,6 +313,55 @@ class DeviceCommunicationControllerTest extends TestCase
             'schedule_id' => $schedule->id,
             'start_time' => '08:00:00',
             'end_time' => '10:00:00',
+        ]);
+    }
+
+    private function prepareBoardWithRoom(): array
+    {
+        $device = Device::factory()->create();
+        $room = Room::factory()->create(['device_id' => $device->id]);
+        $board = DeviceBoard::factory()->create(['device_id' => $device->id]);
+
+        return [$board, $room];
+    }
+
+    private function createFacultySchedulePeriodForRoom(User $faculty, Room $room, Subject $subject): SchedulePeriod
+    {
+        $schedule = Schedule::factory()->create([
+            'user_id' => $faculty->id,
+            'room_id' => $room->id,
+            'subject_id' => $subject->id,
+            'day_of_week' => 'FRIDAY',
+            'active' => true,
+        ]);
+
+        return SchedulePeriod::factory()->create([
+            'schedule_id' => $schedule->id,
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+            'active' => true,
+        ]);
+    }
+
+    private function createActiveClassSession(SchedulePeriod $schedulePeriod): ClassSession
+    {
+        return ClassSession::factory()->create([
+            'schedule_period_id' => $schedulePeriod->id,
+            'start_time' => '09:00:00',
+            'end_time' => null,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    private function createStudentSchedule(User $student, Room $room, Subject $subject): void
+    {
+        Schedule::factory()->create([
+            'user_id' => $student->id,
+            'room_id' => $room->id,
+            'subject_id' => $subject->id,
+            'day_of_week' => 'FRIDAY',
+            'active' => true,
         ]);
     }
 }

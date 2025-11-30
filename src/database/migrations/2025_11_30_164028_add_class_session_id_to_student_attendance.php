@@ -16,6 +16,11 @@ return new class extends Migration
                 ->constrained('class_sessions')
                 ->cascadeOnDelete()
                 ->after('user_id');
+
+            $table->unique(
+                ['user_id', 'class_session_id'],
+                'student_attendance_user_session_unique'
+            );
         });
     }
 
@@ -25,6 +30,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('student_attendance', function (Blueprint $table) {
+            $table->dropUnique('student_attendance_user_session_unique');
             $table->dropConstrainedForeignId('class_session_id');
         });
     }
