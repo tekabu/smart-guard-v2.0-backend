@@ -23,6 +23,29 @@ class ScheduleController extends Controller
         return $this->successResponse(['count' => $count]);
     }
 
+    public function bySubject(Request $request)
+    {
+        $validated = $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+        ]);
+
+        $records = Schedule::query()
+            ->with(['user', 'room'])
+            ->where('subject_id', $validated['subject_id'])
+            ->get()
+            ->map(function (Schedule $schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'user_name' => $schedule->user?->name,
+                    'day_of_week' => $schedule->day_of_week,
+                    'room_number' => $schedule->room?->room_number,
+                    'text' => "{$schedule->user?->name} - {$schedule->day_of_week}, {$schedule->room?->room_number}"
+                ];
+            });
+
+        return $this->successResponse($records);
+    }
+
     public function store(Request $request)
     {
         // Validate basic fields

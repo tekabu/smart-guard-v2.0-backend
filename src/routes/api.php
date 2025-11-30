@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('rooms/count', [RoomController::class, 'count']);
     Route::get('subjects/count', [SubjectController::class, 'count']);
     Route::get('schedules/count', [ScheduleController::class, 'count']);
+    Route::get('schedules/by-subject', [ScheduleController::class, 'bySubject']);
     Route::get('schedule-periods/count', [SchedulePeriodController::class, 'count']);
     Route::get('class-sessions/count', [ClassSessionController::class, 'count']);
     Route::get('student-schedules/count', [StudentScheduleController::class, 'count']);

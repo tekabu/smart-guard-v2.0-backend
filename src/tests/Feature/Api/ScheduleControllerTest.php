@@ -200,4 +200,25 @@ class ScheduleControllerTest extends TestCase
             ->assertJsonStructure(['status', 'data' => ['count']])
             ->assertJsonPath('data.count', 4);
     }
+
+    public function test_can_filter_schedules_by_subject()
+    {
+        $user = User::factory()->create();
+        $subject = Subject::factory()->create();
+        $room = Room::factory()->create();
+        $schedule = Schedule::factory()->create([
+            'subject_id' => $subject->id,
+            'room_id' => $room->id,
+        ]);
+        Schedule::factory()->create(); // other schedule
+
+        $response = $this->actingAs($user)->getJson('/api/schedules/by-subject?subject_id=' . $subject->id);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $schedule->id)
+            ->assertJsonPath('data.0.user_name', $schedule->user->name)
+            ->assertJsonPath('data.0.day_of_week', $schedule->day_of_week)
+            ->assertJsonPath('data.0.room_number', $room->room_number);
+    }
 }
