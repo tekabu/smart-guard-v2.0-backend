@@ -9,13 +9,14 @@ class Device extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['device_id', 'door_open_duration_seconds', 'active', 'last_accessed_by_user_id', 'last_accessed_at', 'last_accessed_used'];
+    protected $fillable = ['device_id', 'door_open_duration_seconds', 'active', 'last_accessed_by_user_id', 'last_accessed_at', 'last_accessed_used', 'last_seen_at'];
 
     protected function casts(): array
     {
         return [
             'active' => 'boolean',
             'last_accessed_at' => 'datetime',
+            'last_seen_at' => 'datetime',
         ];
     }
 
