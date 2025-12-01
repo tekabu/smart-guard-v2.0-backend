@@ -108,12 +108,13 @@ class SectionSubjectControllerTest extends TestCase
             'section_id' => $section->id,
             'subject_id' => $subject->id,
         ]);
+        $sectionSubject->load('faculty');
 
         $response = $this->actingAs($actingUser)->getJson('/api/section-subjects/options');
         $response->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $sectionSubject->id,
-                'label' => 'SECTION A - SUBJECT 1',
+                'label' => sprintf('SECTION A - SUBJECT 1 - %s', $sectionSubject->faculty->name),
             ]);
     }
 }

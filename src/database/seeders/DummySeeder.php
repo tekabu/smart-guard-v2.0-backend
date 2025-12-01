@@ -46,6 +46,12 @@ class DummySeeder extends Seeder
         // Seed student schedules (requires students, schedules, schedule periods)
         $this->call(StudentScheduleSeeder::class);
 
+        // Seed schedule sessions and attendance (requires section subject schedules and students)
+        $this->call([
+            ScheduleSessionSeeder::class,
+            ScheduleAttendanceSeeder::class,
+        ]);
+
         // Seed logs (requires users, rooms, devices)
         $this->call([
             UserAuditLogSeeder::class,

@@ -8,7 +8,9 @@ use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\ScheduleAttendanceController;
 use App\Http\Controllers\Api\SchedulePeriodController;
+use App\Http\Controllers\Api\ScheduleSessionController;
 use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\SectionSubjectController;
 use App\Http\Controllers\Api\SectionSubjectScheduleController;
@@ -66,6 +68,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('schedule-periods/count', [SchedulePeriodController::class, 'count']);
     Route::get('class-sessions/count', [ClassSessionController::class, 'count']);
     Route::get('student-schedules/count', [StudentScheduleController::class, 'count']);
+    Route::get('schedule-sessions/count', [ScheduleSessionController::class, 'count']);
+    Route::get('schedule-attendance/count', [ScheduleAttendanceController::class, 'count']);
     Route::get('user-access-logs/count', [UserAccessLogController::class, 'count']);
     Route::get('user-audit-logs/count', [UserAuditLogController::class, 'count']);
 
@@ -101,6 +105,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Schedule Periods API
     Route::apiResource("schedule-periods", SchedulePeriodController::class);
+
+    // Schedule Sessions API
+    Route::apiResource("schedule-sessions", ScheduleSessionController::class);
+
+    // Schedule Attendance API
+    Route::apiResource("schedule-attendance", ScheduleAttendanceController::class);
 
     // Class Sessions API
     Route::post('class-sessions/{class_session}/close', [ClassSessionController::class, 'close']);
