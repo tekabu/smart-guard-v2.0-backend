@@ -1,6 +1,6 @@
 services:
   nginx:
-    build: 
+    build:
       context: ./build/nginx
       dockerfile: Dockerfile
     container_name: smart-guard-nginx
@@ -11,9 +11,11 @@ services:
     ports:
       - 8021:80
     restart: unless-stopped
+    networks:
+      - smart-guard
 
   php:
-    build: 
+    build:
       context: ./build/php
       dockerfile: Dockerfile
     container_name: smart-guard-php
@@ -22,6 +24,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./src:/var/www/html
     restart: unless-stopped
+    networks:
+      - smart-guard
 
   mysql:
     image: mysql:8.0
@@ -38,6 +42,8 @@ services:
       MYSQL_USER: smart_guard
       MYSQL_PASSWORD: smart_guard_password
     restart: unless-stopped
+    networks:
+      - smart-guard
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -51,3 +57,10 @@ services:
       - "8023:80"
     depends_on:
       - mysql
+    networks:
+      - smart-guard
+
+networks:
+  smart-guard:
+    driver: bridge
+    name: smart-guard
