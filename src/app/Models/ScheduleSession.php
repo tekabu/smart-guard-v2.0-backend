@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -38,5 +40,16 @@ class ScheduleSession extends Model
     public function attendanceRecords()
     {
         return $this->hasMany(ScheduleAttendance::class);
+    }
+
+    public function scopeIsActive(Builder $query): Builder
+    {
+        $now = Carbon::now();
+
+        return $query->whereDate('start_date', $now->toDateString())
+            ->whereHas('sectionSubjectSchedule', function (Builder $subQuery) use ($now) {
+                $subQuery->whereTime('start_time', '<=', $now->format('H:i:s'))
+                    ->whereTime('end_time', '>=', $now->format('H:i:s'));
+            });
     }
 }

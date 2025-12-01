@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\ScheduleAttendance;
 use App\Models\ScheduleSession;
+use App\Models\SectionSubjectSchedule;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,18 +14,30 @@ class ScheduleAttendanceControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Carbon::setTestNow(Carbon::parse('2025-01-01 08:30:00'));
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
+
     public function test_can_create_schedule_attendance()
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $session = ScheduleSession::factory()->create();
+        $session = $this->createActiveSession();
         $student = User::factory()->create(['role' => 'STUDENT']);
 
         $payload = [
             'schedule_session_id' => $session->id,
             'student_id' => $student->id,
-            'date_in' => '2025-01-01',
+            'date_in' => Carbon::today()->toDateString(),
             'time_in' => '08:00:00',
-            'date_out' => '2025-01-01',
+            'date_out' => Carbon::today()->toDateString(),
             'time_out' => '09:00:00',
             'attendance_status' => 'PRESENT',
         ];
@@ -38,7 +51,7 @@ class ScheduleAttendanceControllerTest extends TestCase
     public function test_requires_unique_attendance_per_student_date()
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $session = ScheduleSession::factory()->create();
+        $session = $this->createActiveSession();
         $student = User::factory()->create(['role' => 'STUDENT']);
 
         ScheduleAttendance::factory()->create([
@@ -50,7 +63,7 @@ class ScheduleAttendanceControllerTest extends TestCase
         $payload = [
             'schedule_session_id' => $session->id,
             'student_id' => $student->id,
-            'date_in' => '2025-01-01',
+            'date_in' => Carbon::today()->toDateString(),
             'attendance_status' => 'ABSENT',
         ];
 
@@ -62,7 +75,7 @@ class ScheduleAttendanceControllerTest extends TestCase
     public function test_time_out_must_be_after_time_in()
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $session = ScheduleSession::factory()->create();
+        $session = $this->createActiveSession();
         $student = User::factory()->create(['role' => 'STUDENT']);
 
         $payload = [
@@ -121,5 +134,48 @@ class ScheduleAttendanceControllerTest extends TestCase
         $response = $this->actingAs($admin)->getJson('/api/schedule-attendance/count');
 
         $response->assertOk()->assertJsonPath('data.count', 3);
+    }
+
+    public function test_cannot_create_attendance_for_inactive_session()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'start_time' => '06:00:00',
+            'end_time' => '07:00:00',
+        ]);
+        $session = ScheduleSession::factory()
+            ->for($sectionSchedule, 'sectionSubjectSchedule')
+            ->create([
+                'start_date' => Carbon::yesterday()->toDateString(),
+                'day_of_week' => $sectionSchedule->day_of_week,
+                'room_id' => $sectionSchedule->room_id,
+            ]);
+
+        $payload = [
+            'schedule_session_id' => $session->id,
+            'student_id' => $student->id,
+            'attendance_status' => 'PRESENT',
+        ];
+
+        $response = $this->actingAs($admin)->postJson('/api/schedule-attendance', $payload);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['schedule_session_id']);
+    }
+
+    private function createActiveSession(): ScheduleSession
+    {
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'start_time' => '08:00:00',
+            'end_time' => '09:30:00',
+        ]);
+
+        return ScheduleSession::factory()
+            ->for($sectionSchedule, 'sectionSubjectSchedule')
+            ->create([
+                'day_of_week' => $sectionSchedule->day_of_week,
+                'room_id' => $sectionSchedule->room_id,
+                'start_date' => Carbon::today()->toDateString(),
+            ]);
     }
 }

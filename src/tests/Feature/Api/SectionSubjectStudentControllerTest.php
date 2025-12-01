@@ -67,7 +67,7 @@ class SectionSubjectStudentControllerTest extends TestCase
         $this->assertDatabaseMissing('section_subject_students', ['id' => $sectionSubjectStudent->id]);
     }
 
-    public function test_section_subject_student_responses_include_section_and_subject()
+    public function test_section_subject_student_responses_include_section_subject_and_faculty()
     {
         $actingUser = User::factory()->create(['role' => 'ADMIN']);
         $sectionSubjectStudent = SectionSubjectStudent::factory()->create();
@@ -75,6 +75,7 @@ class SectionSubjectStudentControllerTest extends TestCase
         $response = $this->actingAs($actingUser)->getJson("/api/section-subject-students/{$sectionSubjectStudent->id}");
         $response->assertStatus(200)
             ->assertJsonPath('data.section_subject.section.id', $sectionSubjectStudent->sectionSubject->section->id)
-            ->assertJsonPath('data.section_subject.subject.id', $sectionSubjectStudent->sectionSubject->subject->id);
+            ->assertJsonPath('data.section_subject.subject.id', $sectionSubjectStudent->sectionSubject->subject->id)
+            ->assertJsonPath('data.section_subject.faculty.id', $sectionSubjectStudent->sectionSubject->faculty->id);
     }
 }

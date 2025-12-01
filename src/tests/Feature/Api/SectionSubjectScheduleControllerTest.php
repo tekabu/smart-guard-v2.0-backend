@@ -226,4 +226,17 @@ class SectionSubjectScheduleControllerTest extends TestCase
         $response->assertStatus(204);
         $this->assertDatabaseMissing('section_subject_schedules', ['id' => $schedule->id]);
     }
+
+    public function test_section_subject_schedule_responses_include_section_subject_and_faculty()
+    {
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $schedule = SectionSubjectSchedule::factory()->create();
+
+        $response = $this->actingAs($actingUser)->getJson("/api/section-subject-schedules/{$schedule->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.section_subject.section.id', $schedule->sectionSubject->section->id)
+            ->assertJsonPath('data.section_subject.subject.id', $schedule->sectionSubject->subject->id)
+            ->assertJsonPath('data.section_subject.faculty.id', $schedule->sectionSubject->faculty->id);
+    }
 }

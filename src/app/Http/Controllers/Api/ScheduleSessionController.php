@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ScheduleSession;
+use App\Models\SectionSubjectSchedule;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -69,7 +70,7 @@ class ScheduleSessionController extends Controller
             'faculty_id' => [$isUpdate ? 'sometimes' : 'required', 'integer', $facultyRule],
             'day_of_week' => [$isUpdate ? 'sometimes' : 'required', Rule::in(self::DAYS)],
             'room_id' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:rooms,id'],
-            'start_date' => ['nullable', 'date'],
+            'start_date' => [$isUpdate ? 'sometimes' : 'required', 'date'],
             'start_time' => ['nullable', 'date_format:H:i:s'],
             'end_date' => ['nullable', 'date'],
             'end_time' => ['nullable', 'date_format:H:i:s'],
@@ -99,6 +100,7 @@ class ScheduleSessionController extends Controller
         );
 
         $this->ensureUniqueSession($resolved, $record?->id);
+        $this->ensureCreationRules($resolved, $isUpdate);
 
         return $validated;
     }
@@ -154,6 +156,39 @@ class ScheduleSessionController extends Controller
         if ($query->exists()) {
             throw ValidationException::withMessages([
                 'start_date' => ['A session for this schedule on the specified start date already exists.'],
+            ]);
+        }
+    }
+
+    private function ensureCreationRules(array $data, bool $isUpdate): void
+    {
+        if ($isUpdate) {
+            return;
+        }
+
+        if (!isset($data['start_date'], $data['section_subject_schedule_id'])) {
+            return;
+        }
+
+        $startDate = Carbon::parse($data['start_date']);
+        if (!$startDate->isToday()) {
+            throw ValidationException::withMessages([
+                'start_date' => ['Schedule sessions can only be created for the current date.'],
+            ]);
+        }
+
+        $schedule = SectionSubjectSchedule::find($data['section_subject_schedule_id']);
+        if (!$schedule) {
+            return;
+        }
+
+        $now = Carbon::now();
+        $scheduleStart = Carbon::today()->setTimeFromTimeString($schedule->start_time);
+        $scheduleEnd = Carbon::today()->setTimeFromTimeString($schedule->end_time);
+
+        if ($now->lt($scheduleStart) || $now->gt($scheduleEnd)) {
+            throw ValidationException::withMessages([
+                'section_subject_schedule_id' => ['Schedule sessions can only be created while the schedule time window is active.'],
             ]);
         }
     }

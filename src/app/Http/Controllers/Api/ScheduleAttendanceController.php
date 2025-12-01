@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ScheduleAttendance;
+use App\Models\ScheduleSession;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -97,6 +98,7 @@ class ScheduleAttendanceController extends Controller
         );
 
         $this->ensureUniqueAttendance($resolved, $record?->id);
+        $this->ensureSessionIsActive($resolved, $isUpdate);
 
         return $validated;
     }
@@ -149,6 +151,24 @@ class ScheduleAttendanceController extends Controller
         if ($query->exists()) {
             throw ValidationException::withMessages([
                 'date_in' => ['Attendance for this student and session on the specified date already exists.'],
+            ]);
+        }
+    }
+
+    private function ensureSessionIsActive(array $data, bool $isUpdate): void
+    {
+        if ($isUpdate || !isset($data['schedule_session_id'])) {
+            return;
+        }
+
+        $isActive = ScheduleSession::query()
+            ->whereKey($data['schedule_session_id'])
+            ->isActive()
+            ->exists();
+
+        if (!$isActive) {
+            throw ValidationException::withMessages([
+                'schedule_session_id' => ['Attendance can only be recorded for active schedule sessions.'],
             ]);
         }
     }

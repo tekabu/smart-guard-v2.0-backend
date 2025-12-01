@@ -18,6 +18,7 @@ class SectionSubjectStudentController extends Controller
         $records = SectionSubjectStudent::with([
             'sectionSubject.section',
             'sectionSubject.subject',
+            'sectionSubject.faculty',
             'student',
         ])->get();
         return $this->successResponse($records);
@@ -39,6 +40,7 @@ class SectionSubjectStudentController extends Controller
         return $this->successResponse($record->load([
             'sectionSubject.section',
             'sectionSubject.subject',
+            'sectionSubject.faculty',
             'student',
         ]), 201);
     }
@@ -48,6 +50,7 @@ class SectionSubjectStudentController extends Controller
         $record = SectionSubjectStudent::with([
             'sectionSubject.section',
             'sectionSubject.subject',
+            'sectionSubject.faculty',
             'student',
         ])->findOrFail($id);
         return $this->successResponse($record);
@@ -73,6 +76,7 @@ class SectionSubjectStudentController extends Controller
         return $this->successResponse($record->load([
             'sectionSubject.section',
             'sectionSubject.subject',
+            'sectionSubject.faculty',
             'student',
         ]));
     }

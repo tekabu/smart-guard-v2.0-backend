@@ -15,15 +15,16 @@ class SectionSubjectScheduleController extends Controller
     use ApiResponse;
 
     private const DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    private const RELATIONS = [
+        'sectionSubject.section',
+        'sectionSubject.subject',
+        'sectionSubject.faculty',
+        'room',
+    ];
 
     public function index()
     {
-        $records = SectionSubjectSchedule::with([
-            'sectionSubject.section',
-            'sectionSubject.subject',
-            'sectionSubject.faculty',
-            'room',
-        ])->get();
+        $records = SectionSubjectSchedule::with(self::RELATIONS)->get();
 
         return $this->successResponse($records);
     }
@@ -44,22 +45,12 @@ class SectionSubjectScheduleController extends Controller
 
         $record = SectionSubjectSchedule::create($validated);
 
-        return $this->successResponse($record->load([
-            'sectionSubject.section',
-            'sectionSubject.subject',
-            'sectionSubject.faculty',
-            'room',
-        ]), 201);
+        return $this->successResponse($record->load(self::RELATIONS), 201);
     }
 
     public function show(string $id)
     {
-        $record = SectionSubjectSchedule::with([
-            'sectionSubject.section',
-            'sectionSubject.subject',
-            'sectionSubject.faculty',
-            'room',
-        ])->findOrFail($id);
+        $record = SectionSubjectSchedule::with(self::RELATIONS)->findOrFail($id);
 
         return $this->successResponse($record);
     }
@@ -90,12 +81,7 @@ class SectionSubjectScheduleController extends Controller
 
         $record->update($validated);
 
-        return $this->successResponse($record->load([
-            'sectionSubject.section',
-            'sectionSubject.subject',
-            'sectionSubject.faculty',
-            'room',
-        ]));
+        return $this->successResponse($record->load(self::RELATIONS));
     }
 
     public function destroy(string $id)
