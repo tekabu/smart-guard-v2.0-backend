@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ScheduleAttendance;
 use App\Models\ScheduleSession;
-use App\Models\User;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -34,7 +33,11 @@ class ScheduleAttendanceController extends Controller
         $validated = $request->validate([
             'section_id' => ['sometimes', 'integer', 'exists:sections,id'],
             'subject_id' => ['sometimes', 'integer', 'exists:subjects,id'],
-            'faculty_id' => ['sometimes', 'string', 'exists:users,faculty_id'],
+            'faculty_id' => [
+                'sometimes',
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'FACULTY')),
+            ],
             'date_in' => ['sometimes', 'date_format:Y-m-d'],
         ]);
 
@@ -59,16 +62,13 @@ class ScheduleAttendanceController extends Controller
         }
 
         if (isset($validated['faculty_id'])) {
-            $facultyIds = User::query()
-                ->where('faculty_id', $validated['faculty_id'])
-                ->pluck('id')
-                ->all();
+            $facultyId = $validated['faculty_id'];
 
-            $query->where(function ($builder) use ($facultyIds) {
-                $builder->whereHas('scheduleSession', function ($sessionQuery) use ($facultyIds) {
-                    $sessionQuery->whereIn('faculty_id', $facultyIds);
-                })->orWhereHas('scheduleSession.sectionSubjectSchedule.sectionSubject', function ($sectionSubjectQuery) use ($facultyIds) {
-                    $sectionSubjectQuery->whereIn('faculty_id', $facultyIds);
+            $query->where(function ($builder) use ($facultyId) {
+                $builder->whereHas('scheduleSession', function ($sessionQuery) use ($facultyId) {
+                    $sessionQuery->where('faculty_id', $facultyId);
+                })->orWhereHas('scheduleSession.sectionSubjectSchedule.sectionSubject', function ($sectionSubjectQuery) use ($facultyId) {
+                    $sectionSubjectQuery->where('faculty_id', $facultyId);
                 });
             });
         }

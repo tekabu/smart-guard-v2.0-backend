@@ -211,7 +211,7 @@ class ScheduleAttendanceControllerTest extends TestCase
         $query = http_build_query([
             'section_id' => $section->id,
             'subject_id' => $subject->id,
-            'faculty_id' => 'FAC-001',
+            'faculty_id' => $faculty->id,
             'date_in' => '2025-01-02',
         ]);
 
