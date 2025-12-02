@@ -53,6 +53,7 @@ class UserController extends Controller
             'year_level' => 'nullable|integer',
             'attendance_rate' => 'nullable|numeric',
             'department' => 'nullable|string',
+            'clearance' => 'nullable|boolean',
         ]);
 
         if (isset($validated['password'])) {
@@ -100,6 +101,7 @@ class UserController extends Controller
             'year_level' => 'nullable|integer',
             'attendance_rate' => 'nullable|numeric',
             'department' => 'nullable|string',
+            'clearance' => 'sometimes|boolean',
         ];
 
         // Only add password validation rules if password is provided

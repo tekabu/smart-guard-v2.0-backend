@@ -31,6 +31,7 @@ class User extends Authenticatable
         'year_level',
         'attendance_rate',
         'department',
+        'clearance',
     ];
 
     /**
@@ -56,6 +57,7 @@ class User extends Authenticatable
             'active' => 'boolean',
             'last_accessed_at' => 'datetime',
             'attendance_rate' => 'decimal:2',
+            'clearance' => 'boolean',
         ];
     }
 
