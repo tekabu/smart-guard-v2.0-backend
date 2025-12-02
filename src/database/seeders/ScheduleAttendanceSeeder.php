@@ -28,7 +28,7 @@ class ScheduleAttendanceSeeder extends Seeder
         }
 
         foreach ($sessions as $session) {
-            $attendeeCount = min($students->count(), rand(1, 3));
+            $attendeeCount = min($students->count(), rand(1, 30));
             $selectedStudents = $attendeeCount === 1
                 ? collect([$students->random()])
                 : $students->random($attendeeCount);

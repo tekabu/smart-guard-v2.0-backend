@@ -78,10 +78,10 @@ class SubjectSeeder extends Seeder
         ];
 
         foreach ($subjects as $subject) {
-            Subject::create([
-                'subject' => $subject,
-                'active' => true,
-            ]);
+            Subject::updateOrCreate(
+                ['subject' => $subject],
+                ['active' => true]
+            );
         }
     }
 }
