@@ -101,6 +101,40 @@ class ScheduleSessionController extends Controller
         return $this->successResponse($record->load(['sectionSubjectSchedule', 'faculty', 'room']), 201);
     }
 
+    public function createFromSchedule(Request $request)
+    {
+        $payload = $request->validate([
+            'section_subject_schedule_id' => ['required', 'integer', 'exists:section_subject_schedules,id'],
+        ]);
+
+        $sectionSchedule = SectionSubjectSchedule::with('sectionSubject')
+            ->findOrFail($payload['section_subject_schedule_id']);
+
+        $sectionSubject = $sectionSchedule->sectionSubject;
+
+        if (!$sectionSubject || !$sectionSubject->faculty_id) {
+            throw ValidationException::withMessages([
+                'section_subject_schedule_id' => ['Section subject schedules require an assigned faculty before creating sessions.'],
+            ]);
+        }
+
+        $now = $this->ensureScheduleIsActiveNow($sectionSchedule);
+        $currentDay = strtoupper($now->format('l'));
+
+        $shouldStart = $request->boolean('start');
+
+        $request->replace([
+            'section_subject_schedule_id' => $sectionSchedule->id,
+            'faculty_id' => $sectionSubject->faculty_id,
+            'day_of_week' => $currentDay,
+            'room_id' => $sectionSchedule->room_id,
+            'start_date' => $shouldStart ? Carbon::today()->toDateString() : null,
+            'start_time' => $shouldStart ? $now->format('H:i:s') : null,
+        ]);
+
+        return $this->store($request);
+    }
+
     public function show(string $id)
     {
         $record = ScheduleSession::with(['sectionSubjectSchedule', 'faculty', 'room'])->findOrFail($id);
@@ -116,6 +150,55 @@ class ScheduleSessionController extends Controller
         $record->update($validated);
 
         return $this->successResponse($record->load(['sectionSubjectSchedule', 'faculty', 'room']));
+    }
+
+    public function start(string $id)
+    {
+        $record = ScheduleSession::with('sectionSubjectSchedule')->findOrFail($id);
+
+        $schedule = $record->sectionSubjectSchedule;
+        if (!$schedule) {
+            throw ValidationException::withMessages([
+                'section_subject_schedule_id' => ['Schedule session must have an associated schedule before starting.'],
+            ]);
+        }
+
+        $now = $this->ensureScheduleIsActiveNow($schedule);
+
+        $record->update([
+            'start_date' => $now->toDateString(),
+            'start_time' => $now->format('H:i:s'),
+        ]);
+
+        return $this->successResponse($record->fresh(['sectionSubjectSchedule', 'faculty', 'room']));
+    }
+
+    public function close(string $id)
+    {
+        $record = ScheduleSession::findOrFail($id);
+
+        $today = Carbon::today();
+        $startDate = $record->start_date ? Carbon::parse($record->start_date) : null;
+        $endDate = $today;
+
+        if ($startDate && $today->lessThanOrEqualTo($startDate)) {
+            $endDate = $startDate;
+        }
+
+        $now = Carbon::now();
+        $startTime = $record->start_time ? Carbon::createFromFormat('H:i:s', $record->start_time) : null;
+        $endTime = $now->format('H:i:s');
+
+        if ($startTime && $now->lessThanOrEqualTo($startTime)) {
+            $endTime = $startTime->format('H:i:s');
+        }
+
+        $record->update([
+            'end_date' => $endDate->toDateString(),
+            'end_time' => $endTime,
+        ]);
+
+        return $this->successResponse($record->fresh(['sectionSubjectSchedule', 'faculty', 'room']));
     }
 
     public function destroy(string $id)
@@ -134,7 +217,7 @@ class ScheduleSessionController extends Controller
             'faculty_id' => [$isUpdate ? 'sometimes' : 'required', 'integer', $facultyRule],
             'day_of_week' => [$isUpdate ? 'sometimes' : 'required', Rule::in(self::DAYS)],
             'room_id' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:rooms,id'],
-            'start_date' => [$isUpdate ? 'sometimes' : 'required', 'date'],
+            'start_date' => [$isUpdate ? 'sometimes' : 'present', 'nullable', 'date'],
             'start_time' => ['nullable', 'date_format:H:i:s'],
             'end_date' => ['nullable', 'date'],
             'end_time' => ['nullable', 'date_format:H:i:s'],
@@ -255,5 +338,28 @@ class ScheduleSessionController extends Controller
                 'section_subject_schedule_id' => ['Schedule sessions can only be created while the schedule time window is active.'],
             ]);
         }
+    }
+
+    private function ensureScheduleIsActiveNow(SectionSubjectSchedule $schedule): Carbon
+    {
+        $now = Carbon::now();
+        $currentDay = strtoupper($now->format('l'));
+
+        if ($schedule->day_of_week !== $currentDay) {
+            throw ValidationException::withMessages([
+                'section_subject_schedule_id' => ['Schedule sessions can only be created on the assigned day of week.'],
+            ]);
+        }
+
+        $scheduleStart = Carbon::today()->setTimeFromTimeString($schedule->start_time);
+        $scheduleEnd = Carbon::today()->setTimeFromTimeString($schedule->end_time);
+
+        if ($now->lt($scheduleStart) || $now->gt($scheduleEnd)) {
+            throw ValidationException::withMessages([
+                'section_subject_schedule_id' => ['Schedule sessions can only be created during the schedule time window.'],
+            ]);
+        }
+
+        return $now;
     }
 }

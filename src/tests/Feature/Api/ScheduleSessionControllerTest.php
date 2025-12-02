@@ -47,6 +47,98 @@ class ScheduleSessionControllerTest extends TestCase
         $this->assertDatabaseHas('schedule_sessions', $payload);
     }
 
+    public function test_can_auto_create_schedule_session_with_start_flag()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 08:45:00'));
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'day_of_week' => strtoupper(Carbon::now()->format('l')),
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/api/schedule-sessions/create?start=1', [
+            'section_subject_schedule_id' => $sectionSchedule->id,
+        ]);
+
+        $dayOfWeek = strtoupper(Carbon::now()->format('l'));
+        $response->assertStatus(201)
+            ->assertJsonPath('data.section_subject_schedule_id', $sectionSchedule->id)
+            ->assertJsonPath('data.faculty_id', $sectionSchedule->sectionSubject->faculty_id)
+            ->assertJsonPath('data.day_of_week', $dayOfWeek)
+            ->assertJsonPath('data.room_id', $sectionSchedule->room_id)
+            ->assertJsonPath('data.start_date', Carbon::today()->toDateString())
+            ->assertJsonPath('data.start_time', Carbon::now()->format('H:i:s'));
+
+        $this->assertDatabaseHas('schedule_sessions', [
+            'section_subject_schedule_id' => $sectionSchedule->id,
+            'faculty_id' => $sectionSchedule->sectionSubject->faculty_id,
+            'day_of_week' => $dayOfWeek,
+            'room_id' => $sectionSchedule->room_id,
+            'start_date' => Carbon::today()->toDateString(),
+            'start_time' => Carbon::now()->format('H:i:s'),
+        ]);
+    }
+
+    public function test_auto_create_schedule_session_without_start_flag_sets_null_start_fields()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 08:45:00'));
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'day_of_week' => strtoupper(Carbon::now()->format('l')),
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/api/schedule-sessions/create', [
+            'section_subject_schedule_id' => $sectionSchedule->id,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.start_date', null)
+            ->assertJsonPath('data.start_time', null);
+
+        $this->assertDatabaseHas('schedule_sessions', [
+            'section_subject_schedule_id' => $sectionSchedule->id,
+            'start_date' => null,
+            'start_time' => null,
+        ]);
+    }
+
+    public function test_auto_create_schedule_session_fails_if_day_does_not_match()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 08:45:00')); // Wednesday
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'day_of_week' => 'THURSDAY',
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/api/schedule-sessions/create?start=1', [
+            'section_subject_schedule_id' => $sectionSchedule->id,
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['section_subject_schedule_id']);
+    }
+
+    public function test_auto_create_schedule_session_fails_if_current_time_not_in_window()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 07:00:00')); // before start time
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'day_of_week' => strtoupper(Carbon::now()->format('l')),
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/api/schedule-sessions/create?start=1', [
+            'section_subject_schedule_id' => $sectionSchedule->id,
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['section_subject_schedule_id']);
+    }
+
     public function test_prevents_duplicate_start_date_per_schedule()
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
@@ -124,6 +216,122 @@ class ScheduleSessionControllerTest extends TestCase
 
         $response->assertNoContent();
         $this->assertDatabaseMissing('schedule_sessions', ['id' => $record->id]);
+    }
+
+    public function test_can_start_schedule_session()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 08:30:00')); // Wednesday
+        $session = ScheduleSession::factory()
+            ->for(SectionSubjectSchedule::factory()->state([
+                'day_of_week' => strtoupper(Carbon::now()->format('l')),
+                'start_time' => '08:00:00',
+                'end_time' => '09:30:00',
+            ]), 'sectionSubjectSchedule')
+            ->create([
+                'start_date' => null,
+                'start_time' => null,
+            ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/schedule-sessions/{$session->id}/start");
+
+        $response->assertOk()
+            ->assertJsonPath('data.start_date', '2025-01-01')
+            ->assertJsonPath('data.start_time', '08:30:00');
+
+        $this->assertDatabaseHas('schedule_sessions', [
+            'id' => $session->id,
+            'start_date' => '2025-01-01',
+            'start_time' => '08:30:00',
+        ]);
+    }
+
+    public function test_start_schedule_session_fails_if_day_mismatch()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 08:30:00')); // Wednesday
+        $session = ScheduleSession::factory()
+            ->for(SectionSubjectSchedule::factory()->state([
+                'day_of_week' => 'THURSDAY',
+                'start_time' => '08:00:00',
+                'end_time' => '09:30:00',
+            ]), 'sectionSubjectSchedule')
+            ->create([
+                'start_date' => null,
+                'start_time' => null,
+            ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/schedule-sessions/{$session->id}/start");
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['section_subject_schedule_id']);
+    }
+
+    public function test_start_schedule_session_fails_if_outside_time_window()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 07:00:00')); // before start
+        $session = ScheduleSession::factory()
+            ->for(SectionSubjectSchedule::factory()->state([
+                'day_of_week' => strtoupper(Carbon::now()->format('l')),
+                'start_time' => '08:00:00',
+                'end_time' => '09:30:00',
+            ]), 'sectionSubjectSchedule')
+            ->create([
+                'start_date' => null,
+                'start_time' => null,
+            ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/schedule-sessions/{$session->id}/start");
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['section_subject_schedule_id']);
+    }
+
+    public function test_can_close_schedule_session()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 09:30:00'));
+        $record = ScheduleSession::factory()->create([
+            'start_date' => '2025-01-01',
+            'start_time' => '08:00:00',
+            'end_date' => null,
+            'end_time' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/schedule-sessions/{$record->id}/close");
+
+        $response->assertOk()
+            ->assertJsonPath('data.end_date', '2025-01-01')
+            ->assertJsonPath('data.end_time', '09:30:00');
+
+        $this->assertDatabaseHas('schedule_sessions', [
+            'id' => $record->id,
+            'end_date' => '2025-01-01',
+            'end_time' => '09:30:00',
+        ]);
+    }
+
+    public function test_close_schedule_session_before_start_aligns_with_start_values()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Carbon::setTestNow(Carbon::parse('2025-01-01 07:00:00'));
+        $record = ScheduleSession::factory()->create([
+            'start_date' => '2025-01-02',
+            'start_time' => '08:00:00',
+            'end_date' => null,
+            'end_time' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/schedule-sessions/{$record->id}/close");
+
+        $response->assertOk()
+            ->assertJsonPath('data.end_date', '2025-01-02')
+            ->assertJsonPath('data.end_time', '08:00:00');
+
+        $this->assertDatabaseHas('schedule_sessions', [
+            'id' => $record->id,
+            'end_date' => '2025-01-02',
+            'end_time' => '08:00:00',
+        ]);
     }
 
     public function test_can_get_schedule_sessions_count()

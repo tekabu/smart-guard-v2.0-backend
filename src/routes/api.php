@@ -108,6 +108,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource("schedule-periods", SchedulePeriodController::class);
 
     // Schedule Sessions API
+    Route::post('schedule-sessions/create', [ScheduleSessionController::class, 'createFromSchedule']);
+    Route::post('schedule-sessions/{schedule_session}/start', [ScheduleSessionController::class, 'start']);
+    Route::post('schedule-sessions/{schedule_session}/close', [ScheduleSessionController::class, 'close']);
     Route::apiResource("schedule-sessions", ScheduleSessionController::class);
 
     // Schedule Attendance API
