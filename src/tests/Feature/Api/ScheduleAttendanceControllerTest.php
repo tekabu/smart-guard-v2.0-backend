@@ -4,7 +4,10 @@ namespace Tests\Feature\Api;
 
 use App\Models\ScheduleAttendance;
 use App\Models\ScheduleSession;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\SectionSubjectSchedule;
+use App\Models\Subject;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -161,6 +164,68 @@ class ScheduleAttendanceControllerTest extends TestCase
         $response = $this->actingAs($admin)->postJson('/api/schedule-attendance', $payload);
 
         $response->assertStatus(422)->assertJsonValidationErrors(['schedule_session_id']);
+    }
+
+    public function test_can_get_schedule_attendance_overview_with_filters()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $section = Section::factory()->create();
+        $subject = Subject::factory()->create();
+        $faculty = User::factory()->create([
+            'role' => 'FACULTY',
+            'faculty_id' => 'FAC-001',
+        ]);
+
+        $sectionSubject = SectionSubject::factory()
+            ->for($section)
+            ->for($subject)
+            ->for($faculty, 'faculty')
+            ->create();
+
+        $sectionSchedule = SectionSubjectSchedule::factory()
+            ->for($sectionSubject)
+            ->create();
+
+        $session = ScheduleSession::factory()
+            ->for($sectionSchedule, 'sectionSubjectSchedule')
+            ->for($faculty, 'faculty')
+            ->create();
+
+        $student = User::factory()->create([
+            'role' => 'STUDENT',
+            'student_id' => 'STU-001',
+        ]);
+
+        ScheduleAttendance::factory()
+            ->for($session, 'scheduleSession')
+            ->for($student, 'student')
+            ->create([
+                'date_in' => '2025-01-02',
+                'time_in' => '08:05:00',
+            ]);
+
+        ScheduleAttendance::factory()->create([
+            'date_in' => '2025-02-01',
+        ]);
+
+        $query = http_build_query([
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+            'faculty_id' => 'FAC-001',
+            'date_in' => '2025-01-02',
+        ]);
+
+        $response = $this->actingAs($admin)->getJson("/api/schedule-attendance/overview?{$query}");
+
+        $response->assertOk()->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.section', $section->section);
+        $response->assertJsonPath('data.0.subject', $subject->subject);
+        $response->assertJsonPath('data.0.faculty', $faculty->name);
+        $response->assertJsonPath('data.0.student', $student->name);
+        $response->assertJsonPath('data.0.student_id', 'STU-001');
+        $response->assertJsonPath('data.0.faculty_id', 'FAC-001');
+        $response->assertJsonPath('data.0.date_in', '2025-01-02');
+        $response->assertJsonPath('data.0.time_in', '08:05:00');
     }
 
     private function createActiveSession(): ScheduleSession

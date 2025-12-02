@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ScheduleAttendance;
 use App\Models\ScheduleSession;
+use App\Models\User;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,6 +27,76 @@ class ScheduleAttendanceController extends Controller
     public function count()
     {
         return $this->successResponse(['count' => ScheduleAttendance::count()]);
+    }
+
+    public function overview(Request $request)
+    {
+        $validated = $request->validate([
+            'section_id' => ['sometimes', 'integer', 'exists:sections,id'],
+            'subject_id' => ['sometimes', 'integer', 'exists:subjects,id'],
+            'faculty_id' => ['sometimes', 'string', 'exists:users,faculty_id'],
+            'date_in' => ['sometimes', 'date_format:Y-m-d'],
+        ]);
+
+        $query = ScheduleAttendance::query()->with([
+            'student:id,name,student_id',
+            'scheduleSession.faculty:id,name,faculty_id',
+            'scheduleSession.sectionSubjectSchedule.sectionSubject.section',
+            'scheduleSession.sectionSubjectSchedule.sectionSubject.subject',
+            'scheduleSession.sectionSubjectSchedule.sectionSubject.faculty:id,name,faculty_id',
+        ]);
+
+        if (isset($validated['section_id'])) {
+            $query->whereHas('scheduleSession.sectionSubjectSchedule.sectionSubject', function ($q) use ($validated) {
+                $q->where('section_id', $validated['section_id']);
+            });
+        }
+
+        if (isset($validated['subject_id'])) {
+            $query->whereHas('scheduleSession.sectionSubjectSchedule.sectionSubject', function ($q) use ($validated) {
+                $q->where('subject_id', $validated['subject_id']);
+            });
+        }
+
+        if (isset($validated['faculty_id'])) {
+            $facultyIds = User::query()
+                ->where('faculty_id', $validated['faculty_id'])
+                ->pluck('id')
+                ->all();
+
+            $query->where(function ($builder) use ($facultyIds) {
+                $builder->whereHas('scheduleSession', function ($sessionQuery) use ($facultyIds) {
+                    $sessionQuery->whereIn('faculty_id', $facultyIds);
+                })->orWhereHas('scheduleSession.sectionSubjectSchedule.sectionSubject', function ($sectionSubjectQuery) use ($facultyIds) {
+                    $sectionSubjectQuery->whereIn('faculty_id', $facultyIds);
+                });
+            });
+        }
+
+        if (isset($validated['date_in'])) {
+            $query->whereDate('date_in', $validated['date_in']);
+        }
+
+        $records = $query->get()->map(function (ScheduleAttendance $attendance) {
+            $student = $attendance->student;
+            $session = $attendance->scheduleSession;
+            $sectionSubject = $session?->sectionSubjectSchedule?->sectionSubject;
+            $sessionFaculty = $session?->faculty;
+            $sectionFaculty = $sectionSubject?->faculty;
+
+            return [
+                'section' => $sectionSubject?->section?->section,
+                'subject' => $sectionSubject?->subject?->subject,
+                'faculty' => $sessionFaculty?->name ?? $sectionFaculty?->name,
+                'student' => $student?->name,
+                'student_id' => $student?->student_id,
+                'faculty_id' => $sessionFaculty?->faculty_id ?? $sectionFaculty?->faculty_id,
+                'date_in' => $attendance->date_in,
+                'time_in' => $attendance->time_in,
+            ];
+        })->values();
+
+        return $this->successResponse($records);
     }
 
     public function store(Request $request)

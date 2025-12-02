@@ -71,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('schedule-sessions/count', [ScheduleSessionController::class, 'count']);
     Route::get('schedule-sessions/overview', [ScheduleSessionController::class, 'overview']);
     Route::get('schedule-attendance/count', [ScheduleAttendanceController::class, 'count']);
+    Route::get('schedule-attendance/overview', [ScheduleAttendanceController::class, 'overview']);
     Route::get('user-access-logs/count', [UserAccessLogController::class, 'count']);
     Route::get('user-audit-logs/count', [UserAuditLogController::class, 'count']);
 
