@@ -11,9 +11,14 @@ class RoomController extends Controller
 {
     use ApiResponse;
 
+    /**
+     * Relationships that are always returned with rooms.
+     */
+    private array $roomRelations = ['device', 'lastOpenedByUser', 'lastClosedByUser'];
+
     public function index()
     {
-        $records = Room::query()->with(['device', 'lastOpenedByUser', 'lastClosedByUser'])->get();
+        $records = Room::query()->with($this->roomRelations)->get();
         return $this->successResponse($records);
     }
 
@@ -31,13 +36,13 @@ class RoomController extends Controller
             'active' => 'boolean',
         ]);
 
-        $record = Room::create($validated);
+        $record = Room::create($validated)->load($this->roomRelations);
         return $this->successResponse($record, 201);
     }
 
     public function show(string $id)
     {
-        $record = Room::query()->with(['device', 'lastOpenedByUser', 'lastClosedByUser'])->findOrFail($id);
+        $record = Room::query()->with($this->roomRelations)->findOrFail($id);
         return $this->successResponse($record);
     }
 
@@ -59,6 +64,7 @@ class RoomController extends Controller
         $validated = $request->validate($updateRules);
 
         $record->update($validated);
+        $record->load($this->roomRelations);
         return $this->successResponse($record);
     }
 

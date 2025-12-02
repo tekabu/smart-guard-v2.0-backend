@@ -30,7 +30,8 @@ class RoomControllerTest extends TestCase
         $response = $this->actingAs($user)->postJson('/api/rooms', $roomData);
         $response->assertStatus(201)
             ->assertJsonStructure(['status', 'data'])
-            ->assertJsonPath('data.room_number', '101');
+            ->assertJsonPath('data.room_number', '101')
+            ->assertJsonPath('data.device.id', $device->id);
         $this->assertDatabaseHas('rooms', ['room_number' => '101']);
     }
 
@@ -48,13 +49,15 @@ class RoomControllerTest extends TestCase
     public function test_can_update_room()
     {
         $user = User::factory()->create(); // Acting user
+        $device = Device::factory()->create();
         $room = Room::factory()->create();
-        $updateData = ['room_number' => '202', 'active' => false];
+        $updateData = ['room_number' => '202', 'active' => false, 'device_id' => $device->id];
         $response = $this->actingAs($user)->putJson('/api/rooms/' . $room->id, $updateData);
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonPath('data.room_number', '202')
-            ->assertJsonPath('data.active', false);
+            ->assertJsonPath('data.active', false)
+            ->assertJsonPath('data.device.id', $device->id);
         $this->assertDatabaseHas('rooms', ['id' => $room->id, 'room_number' => '202']);
     }
 
