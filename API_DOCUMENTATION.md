@@ -67,6 +67,56 @@ Monitor API health and database connectivity.
 }
 ```
 
+### Count Endpoints
+
+Get total counts of records in the system. All require authentication.
+
+- `GET /api/users/count` - Get total number of users
+- `GET /api/user-fingerprints/count` - Get total number of fingerprint registrations
+- `GET /api/user-rfids/count` - Get total number of RFID registrations
+- `GET /api/devices/count` - Get total number of devices
+- `GET /api/device-boards/count` - Get total number of device boards
+- `GET /api/rooms/count` - Get total number of rooms
+- `GET /api/subjects/count` - Get total number of subjects
+- `GET /api/schedules/count` - Get total number of schedules
+- `GET /api/schedules/by-subject` - Get schedules grouped by subject
+- `GET /api/schedule-periods/count` - Get total number of schedule periods
+- `GET /api/class-sessions/count` - Get total number of class sessions
+- `GET /api/student-schedules/count` - Get total number of student schedules
+- `GET /api/schedule-sessions/count` - Get total number of schedule sessions
+- `GET /api/schedule-sessions/overview` - Get overview of schedule sessions
+- `GET /api/schedule-attendance/count` - Get total number of attendance records
+- `GET /api/schedule-attendance/overview` - Get overview of attendance records
+- `GET /api/user-access-logs/count` - Get total number of access logs
+- `GET /api/user-audit-logs/count` - Get total number of audit logs
+
+**Response (GET /api/{resource}/count):**
+```json
+{
+  "status": true,
+  "data": {
+    "count": 42
+  }
+}
+```
+
+**Response (GET /api/schedules/by-subject):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "subject": "Computer Programming",
+      "count": 3
+    },
+    {
+      "subject": "Data Structures",
+      "count": 2
+    }
+  ]
+}
+```
+
 ### Authentication
 
 Manage user authentication sessions.
@@ -228,7 +278,8 @@ The system uses four distinct user roles with specific required fields for each:
   "course": "Computer Science",
   "year_level": 4,
   "attendance_rate": 95.5,
-  "department": "Engineering"
+  "department": "Engineering",
+  "clearance": false
 }
 ```
 
@@ -245,7 +296,8 @@ The system uses four distinct user roles with specific required fields for each:
   "course": "Computer Engineering",
   "year_level": 3,
   "attendance_rate": 98.7,
-  "department": "Engineering"
+  "department": "Engineering",
+  "clearance": true
 }
 ```
 
@@ -261,6 +313,7 @@ The system uses four distinct user roles with specific required fields for each:
 - `year_level` - optional, integer
 - `attendance_rate` - optional, numeric (stored with 2 decimal places)
 - `department` - optional, string
+- `clearance` - optional, boolean (default: false)
 
 **Validation Rules (PUT):**
 - All fields are optional (use `sometimes` validation)
@@ -283,6 +336,7 @@ The system uses four distinct user roles with specific required fields for each:
     "year_level": 4,
     "attendance_rate": "95.50",
     "department": "Engineering",
+    "clearance": false,
     "last_access_at": null,
     "email_verified_at": null,
     "created_at": "2025-11-28T10:00:00.000000Z",
@@ -308,6 +362,7 @@ The system uses four distinct user roles with specific required fields for each:
       "year_level": 4,
       "attendance_rate": "95.50",
       "department": "Engineering",
+      "clearance": false,
       "last_access_at": null,
       "email_verified_at": null,
       "created_at": "2025-11-28T10:00:00.000000Z",
@@ -721,6 +776,299 @@ Manage academic subjects.
 }
 ```
 
+### Sections
+
+Manage academic sections or classes.
+
+- `GET /api/sections` - List all sections
+- `POST /api/sections` - Create new section
+- `GET /api/sections/{id}` - Get section details
+- `PUT /api/sections/{id}` - Update section
+- `DELETE /api/sections/{id}` - Delete section
+
+**Request Body (POST):**
+```json
+{
+  "section": "SECTION A",
+  "active": true
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "section": "SECTION B",
+  "active": false
+}
+```
+
+**Validation Rules (POST):**
+- `section` - required, string, must be unique
+- `active` - optional, boolean (default: true)
+
+**Validation Rules (PUT):**
+- `section` - optional, string, must be unique (excludes current record)
+- `active` - optional, boolean
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "section": "SECTION A",
+  "active": true,
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z"
+}
+```
+
+### Section Subjects
+
+Manage subjects assigned to sections with faculty assignments. Includes section, subject, and faculty relationships.
+
+- `GET /api/section-subjects` - List all section subjects (includes relationships)
+- `POST /api/section-subjects` - Create new section subject assignment
+- `GET /api/section-subjects/{id}` - Get section subject details (includes relationships)
+- `PUT /api/section-subjects/{id}` - Update section subject assignment
+- `DELETE /api/section-subjects/{id}` - Delete section subject assignment
+- `GET /api/section-subjects/options` - Get formatted options for dropdown/select lists
+
+**Query Parameters (GET /api/section-subjects):**
+- `section_id` - Filter by section ID
+- `subject_id` - Filter by subject ID
+
+**Request Body (POST):**
+```json
+{
+  "section_id": 1,
+  "subject_id": 1,
+  "faculty_id": 1,
+  "active": true
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "section_id": 2,
+  "subject_id": 2,
+  "faculty_id": 2,
+  "active": false
+}
+```
+
+**Validation Rules (POST):**
+- `section_id` - required, must exist in sections table
+- `subject_id` - required, must exist in subjects table
+- `faculty_id` - required, must exist in users table with FACULTY role
+- `active` - optional, boolean (default: true)
+- **Unique combination check:** The combination of section_id and subject_id must be unique
+
+**Validation Rules (PUT):**
+- `section_id` - optional, must exist in sections table
+- `subject_id` - optional, must exist in subjects table
+- `faculty_id` - optional, must exist in users table with FACULTY role
+- `active` - optional, boolean
+- **Unique combination check:** The combination of section_id and subject_id must be unique (excludes current record)
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "section_id": 1,
+  "subject_id": 1,
+  "faculty_id": 1,
+  "active": true,
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "section": {
+    "id": 1,
+    "section": "SECTION A",
+    "active": true
+  },
+  "subject": {
+    "id": 1,
+    "subject": "Computer Programming",
+    "active": true
+  },
+  "faculty": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "FACULTY"
+  }
+}
+```
+
+**Response (GET /api/section-subjects/options):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "label": "SECTION A - Computer Programming - John Doe"
+    }
+  ]
+}
+```
+
+### Section Subject Schedules
+
+Manage schedule templates for section-subject combinations. Includes day/time patterns and faculty assignments.
+
+- `GET /api/section-subject-schedules` - List all section subject schedules (includes relationships)
+- `POST /api/section-subject-schedules` - Create new section subject schedule
+- `GET /api/section-subject-schedules/{id}` - Get schedule details (includes relationships)
+- `PUT /api/section-subject-schedules/{id}` - Update section subject schedule
+- `DELETE /api/section-subject-schedules/{id}` - Delete section subject schedule
+
+**Request Body (POST):**
+```json
+{
+  "section_subject_id": 1,
+  "day_of_week": "MONDAY",
+  "start_time": "08:00:00",
+  "end_time": "09:30:00",
+  "room_id": 1,
+  "active": true
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "day_of_week": "TUESDAY",
+  "start_time": "10:00:00",
+  "end_time": "11:30:00",
+  "room_id": 2,
+  "active": false
+}
+```
+
+**Validation Rules (POST):**
+- `section_subject_id` - required, must exist in section_subjects table
+- `day_of_week` - required, must be one of: SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+- `start_time` - required, must be in H:i:s format
+- `end_time` - required, must be in H:i:s format, must be after start_time
+- `room_id` - required, must exist in rooms table
+- `active` - optional, boolean (default: true)
+
+**Validation Rules (PUT):**
+- `section_subject_id` - optional, must exist in section_subjects table
+- `day_of_week` - optional, must be one of: SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+- `start_time` - optional, must be in H:i:s format
+- `end_time` - optional, must be in H:i:s format, must be after start_time
+- `room_id` - optional, must exist in rooms table
+- `active` - optional, boolean
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "section_subject_id": 1,
+  "day_of_week": "MONDAY",
+  "start_time": "08:00:00",
+  "end_time": "09:30:00",
+  "room_id": 1,
+  "active": true,
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "sectionSubject": {
+    "id": 1,
+    "section_id": 1,
+    "subject_id": 1,
+    "faculty_id": 1,
+    "section": {
+      "id": 1,
+      "section": "SECTION A",
+      "active": true
+    },
+    "subject": {
+      "id": 1,
+      "subject": "Computer Programming",
+      "active": true
+    },
+    "faculty": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "FACULTY"
+    }
+  },
+  "room": {
+    "id": 1,
+    "room_number": "101",
+    "device_id": 1,
+    "active": true
+  }
+}
+```
+
+### Section Subject Students
+
+Manage student enrollments in section subjects.
+
+- `GET /api/section-subject-students` - List all section subject students (includes relationships)
+- `POST /api/section-subject-students` - Enroll student in section subject
+- `GET /api/section-subject-students/{id}` - Get enrollment details (includes relationships)
+- `PUT /api/section-subject-students/{id}` - Update enrollment
+- `DELETE /api/section-subject-students/{id}` - Remove student from section subject
+
+**Request Body (POST):**
+```json
+{
+  "section_subject_id": 1,
+  "student_id": 1,
+  "active": true
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "section_subject_id": 2,
+  "student_id": 2,
+  "active": false
+}
+```
+
+**Validation Rules (POST):**
+- `section_subject_id` - required, must exist in section_subjects table
+- `student_id` - required, must exist in users table with STUDENT role
+- `active` - optional, boolean (default: true)
+- **Unique combination check:** The combination of section_subject_id and student_id must be unique
+
+**Validation Rules (PUT):**
+- `section_subject_id` - optional, must exist in section_subjects table
+- `student_id` - optional, must exist in users table with STUDENT role
+- `active` - optional, boolean
+- **Unique combination check:** The combination of section_subject_id and student_id must be unique (excludes current record)
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "section_subject_id": 1,
+  "student_id": 1,
+  "active": true,
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "sectionSubject": {
+    "id": 1,
+    "section_id": 1,
+    "subject_id": 1,
+    "faculty_id": 1
+  },
+  "student": {
+    "id": 1,
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "role": "STUDENT",
+    "student_id": "2024-001"
+  }
+}
+```
+
 ### Schedules
 
 Manage faculty teaching schedules. Includes user, room, subject, and periods relationships.
@@ -887,6 +1235,651 @@ Manage time periods for schedules. Includes schedule relationship and overlap va
 {
   "status": false,
   "message": "The schedule period overlaps with an existing schedule period: 08:00:00 - 09:30:00 on room 1 for day MONDAY."
+}
+```
+
+### Schedule Sessions
+
+Manage actual instances of scheduled classes with real dates and times. Includes start/end control and overview functionality.
+
+- `GET /api/schedule-sessions` - List all schedule sessions
+- `POST /api/schedule-sessions` - Create new schedule session
+- `POST /api/schedule-sessions/create` - Auto-create session from schedule template (with optional `start=1` query parameter)
+- `GET /api/schedule-sessions/{id}` - Get session details
+- `PUT /api/schedule-sessions/{id}` - Update session
+- `DELETE /api/schedule-sessions/{id}` - Delete session
+- `POST /api/schedule-sessions/{id}/start` - Start a session (sets start date/time)
+- `POST /api/schedule-sessions/{id}/close` - Close a session (sets end date/time)
+- `GET /api/schedule-sessions/count` - Get total count of sessions
+- `GET /api/schedule-sessions/overview` - Get overview with filters
+
+**Query Parameters (GET /api/schedule-sessions/overview):**
+- `section_id` - Filter by section ID
+- `subject_id` - Filter by subject ID
+- `faculty_id` - Filter by faculty ID
+- `day_of_week` - Filter by day of week
+- `start_date` - Filter by start date
+- `has_class` - Filter by sessions that have class (1) or don't have class (0)
+
+**Request Body (POST /api/schedule-sessions):**
+```json
+{
+  "section_subject_schedule_id": 1,
+  "faculty_id": 1,
+  "day_of_week": "MONDAY",
+  "room_id": 1,
+  "start_date": "2025-01-01",
+  "start_time": "08:00:00",
+  "end_date": "2025-01-01",
+  "end_time": "09:30:00",
+  "active": true
+}
+```
+
+**Request Body (POST /api/schedule-sessions/create):**
+```json
+{
+  "section_subject_schedule_id": 1
+}
+```
+
+**Query Parameters for POST /api/schedule-sessions/create:**
+- `start=1` - Auto-set start_date and start_time to current date/time (only if current day matches schedule and within time window)
+
+**Request Body (PUT):**
+```json
+{
+  "faculty_id": 2,
+  "day_of_week": "TUESDAY",
+  "end_time": "10:30:00"
+}
+```
+
+**Validation Rules (POST):**
+- `section_subject_schedule_id` - required, must exist in section_subject_schedules table
+- `faculty_id` - required, must exist in users table
+- `day_of_week` - required, must be one of: SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+- `room_id` - required, must exist in rooms table
+- `start_date` - required, date, must be today's date
+- `start_time` - required, must be in H:i:s format
+- `end_date` - optional, date, must be same or after start_date
+- `end_time` - optional, must be in H:i:s format, must be after start_time if both present
+- `active` - optional, boolean (default: true)
+- **Unique combination check:** The combination of section_subject_schedule_id and start_date must be unique
+
+**Validation Rules (POST /api/schedule-sessions/create):**
+- `section_subject_schedule_id` - required, must exist in section_subject_schedules table
+- **Additional validation:** Current day must match the schedule's day_of_week when `start=1` is used
+- **Time window validation:** Current time must be within the schedule's time window when `start=1` is used
+
+**Validation Rules (PUT):**
+- All fields are optional (uses `sometimes` validation)
+- `end_time` must be after `start_time` if both are provided
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "section_subject_schedule_id": 1,
+  "faculty_id": 1,
+  "day_of_week": "MONDAY",
+  "room_id": 1,
+  "start_date": "2025-01-01",
+  "start_time": "08:00:00",
+  "end_date": "2025-01-01",
+  "end_time": "09:30:00",
+  "active": true,
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "sectionSubjectSchedule": {
+    "id": 1,
+    "section_subject_id": 1,
+    "day_of_week": "MONDAY",
+    "start_time": "08:00:00",
+    "end_time": "09:30:00",
+    "room_id": 1
+  },
+  "faculty": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "FACULTY"
+  },
+  "room": {
+    "id": 1,
+    "room_number": "101",
+    "device_id": 1,
+    "active": true
+  }
+}
+```
+
+**Response (POST /api/schedule-sessions/{id}/start):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 1,
+    "start_date": "2025-01-01",
+    "start_time": "08:30:00",
+    "end_date": null,
+    "end_time": null
+  }
+}
+```
+
+**Response (POST /api/schedule-sessions/{id}/close):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 1,
+    "start_date": "2025-01-01",
+    "start_time": "08:00:00",
+    "end_date": "2025-01-01",
+    "end_time": "09:30:00"
+  }
+}
+```
+
+**Response (GET /api/schedule-sessions/overview):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "section": "SECTION A",
+      "subject": "Computer Programming",
+      "faculty": "John Doe",
+      "day_of_week": "MONDAY",
+      "start_date": "2025-01-01",
+      "start_time": "08:00:00",
+      "end_time": "09:30:00",
+      "room_number": "101"
+    }
+  ]
+}
+```
+
+### Schedule Attendance
+
+Manage attendance records for schedule sessions. Includes student information and validation.
+
+- `GET /api/schedule-attendance` - List all attendance records
+- `POST /api/schedule-attendance` - Create new attendance record
+- `GET /api/schedule-attendance/{id}` - Get attendance record details
+- `PUT /api/schedule-attendance/{id}` - Update attendance record
+- `DELETE /api/schedule-attendance/{id}` - Delete attendance record
+- `GET /api/schedule-attendance/count` - Get total count of attendance records
+- `GET /api/schedule-attendance/overview` - Get overview with filters
+
+**Query Parameters (GET /api/schedule-attendance/overview):**
+- `section_id` - Filter by section ID
+- `subject_id` - Filter by subject ID
+- `faculty_id` - Filter by faculty ID
+- `student_id` - Filter by student ID
+- `date_in` - Filter by check-in date
+
+**Request Body (POST):**
+```json
+{
+  "schedule_session_id": 1,
+  "student_id": 1,
+  "date_in": "2025-01-01",
+  "time_in": "08:05:00",
+  "date_out": "2025-01-01",
+  "time_out": "09:30:00",
+  "attendance_status": "PRESENT"
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "attendance_status": "LATE",
+  "date_out": "2025-01-01",
+  "time_out": "09:45:00"
+}
+```
+
+**Validation Rules (POST):**
+- `schedule_session_id` - required, must exist in schedule_sessions table
+- `student_id` - required, must exist in users table with STUDENT role
+- `date_in` - required, date format
+- `time_in` - optional, time format (H:i:s)
+- `date_out` - optional, date format
+- `time_out` - optional, time format (H:i:s), must be after time_in if both present
+- `attendance_status` - required, must be one of: PRESENT, ABSENT, LATE, EXCUSED
+- **Active session validation:** The schedule session must be active
+- **Unique combination check:** The combination of student_id, schedule_session_id, and date_in must be unique
+
+**Validation Rules (PUT):**
+- `attendance_status` - optional, must be one of: PRESENT, ABSENT, LATE, EXCUSED
+- `time_out` - optional, must be after time_in if time_in is present
+- **Active session validation:** The schedule session must be active
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "schedule_session_id": 1,
+  "student_id": 1,
+  "date_in": "2025-01-01",
+  "time_in": "08:05:00",
+  "date_out": "2025-01-01",
+  "time_out": "09:30:00",
+  "attendance_status": "PRESENT",
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "scheduleSession": {
+    "id": 1,
+    "section_subject_schedule_id": 1,
+    "faculty_id": 1,
+    "day_of_week": "MONDAY",
+    "room_id": 1,
+    "start_date": "2025-01-01"
+  },
+  "student": {
+    "id": 1,
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "role": "STUDENT",
+    "student_id": "STU-001"
+  }
+}
+```
+
+**Response (GET /api/schedule-attendance/overview):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "section": "SECTION A",
+      "subject": "Computer Programming",
+      "faculty": "John Doe",
+      "student": "Jane Smith",
+      "student_id": "STU-001",
+      "date_in": "2025-01-01",
+      "time_in": "08:05:00",
+      "attendance_status": "PRESENT"
+    }
+  ]
+}
+```
+
+### Student Schedules
+
+Manage student enrollment in scheduled classes. Links students to specific schedule periods.
+
+- `GET /api/student-schedules` - List all student schedules (includes relationships)
+- `POST /api/student-schedules` - Create new student schedule
+- `GET /api/student-schedules/{id}` - Get student schedule details (includes relationships)
+- `PUT /api/student-schedules/{id}` - Update student schedule
+- `DELETE /api/student-schedules/{id}` - Delete student schedule
+- `GET /api/student-schedules/count` - Get total count of student schedules
+
+**Request Body (POST):**
+```json
+{
+  "student_id": 1,
+  "subject_id": 1,
+  "schedule_id": 1,
+  "schedule_period_id": 1,
+  "active": true
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "subject_id": 2,
+  "schedule_id": 2,
+  "schedule_period_id": 2,
+  "active": false
+}
+```
+
+**Validation Rules (POST):**
+- `student_id` - required, must exist in users table with STUDENT role
+- `subject_id` - required, must exist in subjects table
+- `schedule_id` - required, must exist in schedules table
+- `schedule_period_id` - required, must exist in schedule_periods table
+- `active` - optional, boolean (default: true)
+- **Unique combination check:** The combination of student_id and schedule_period_id must be unique
+
+**Validation Rules (PUT):**
+- `student_id` - optional, must exist in users table with STUDENT role
+- `subject_id` - optional, must exist in subjects table
+- `schedule_id` - optional, must exist in schedules table
+- `schedule_period_id` - optional, must exist in schedule_periods table
+- `active` - optional, boolean
+- **Unique combination check:** The combination of student_id and schedule_period_id must be unique (excludes current record)
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "student_id": 1,
+  "subject_id": 1,
+  "schedule_id": 1,
+  "schedule_period_id": 1,
+  "active": true,
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "student": {
+    "id": 1,
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "role": "STUDENT",
+    "student_id": "STU-001"
+  },
+  "subject": {
+    "id": 1,
+    "subject": "Computer Programming",
+    "active": true
+  },
+  "schedule": {
+    "id": 1,
+    "user_id": 2,
+    "day_of_week": "MONDAY",
+    "room_id": 1,
+    "subject_id": 1,
+    "active": true
+  },
+  "schedulePeriod": {
+    "id": 1,
+    "schedule_id": 1,
+    "start_time": "08:00:00",
+    "end_time": "09:30:00",
+    "active": true
+  }
+}
+```
+
+### Class Sessions
+
+Manage actual class sessions that occur based on schedules. Can be created by devices or manually.
+
+- `GET /api/class-sessions` - List all class sessions
+- `POST /api/class-sessions` - Create new class session
+- `GET /api/class-sessions/{id}` - Get class session details
+- `PUT /api/class-sessions/{id}` - Update class session
+- `DELETE /api/class-sessions/{id}` - Delete class session
+- `POST /api/class-sessions/{class_session}/close` - Close a class session
+- `GET /api/class-sessions/count` - Get total count of class sessions
+
+**Request Body (POST):**
+```json
+{
+  "schedule_period_id": 1,
+  "start_time": "08:00:00",
+  "end_time": "09:30:00",
+  "active": true
+}
+```
+
+**Request Body (PUT):**
+```json
+{
+  "end_time": "10:00:00",
+  "active": false
+}
+```
+
+**Request for POST /api/class-sessions/{class_session}/close:**
+No request body required. Sets end_time to current time.
+
+**Validation Rules (POST):**
+- `schedule_period_id` - required, must exist in schedule_periods table
+- `start_time` - optional, time format (H:i:s)
+- `end_time` - optional, time format (H:i:s)
+- `active` - optional, boolean (default: true)
+
+**Validation Rules (PUT):**
+- `schedule_period_id` - optional, must exist in schedule_periods table
+- `start_time` - optional, time format (H:i:s)
+- `end_time` - optional, time format (H:i:s)
+- `active` - optional, boolean
+
+**Response (GET, POST, PUT):**
+```json
+{
+  "id": 1,
+  "schedule_period_id": 1,
+  "start_time": "08:00:00",
+  "end_time": "09:30:00",
+  "active": true,
+  "created_at": "2025-11-28T10:00:00.000000Z",
+  "updated_at": "2025-11-28T10:00:00.000000Z",
+  "schedulePeriod": {
+    "id": 1,
+    "schedule_id": 1,
+    "start_time": "08:00:00",
+    "end_time": "09:30:00",
+    "active": true
+  }
+}
+```
+
+**Response (POST /api/class-sessions/{class_session}/close):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 1,
+    "schedule_period_id": 1,
+    "start_time": "08:00:00",
+    "end_time": "09:30:00",
+    "active": true
+  }
+}
+```
+
+### Device Communication
+
+Manage communication between ESP32 device boards and API. Requires device board authentication.
+
+**Authentication:** Uses Bearer token specific to each device board (not user tokens).
+
+- `POST /api/device-communications/heartbeat` - Send heartbeat from device board
+- `GET /api/device-communications/me` - Get device board profile
+- `POST /api/device-communications/validate-card` - Validate RFID card
+- `POST /api/device-communications/validate-fingerprint` - Validate fingerprint
+- `POST /api/device-communications/scan-card` - Scan RFID card
+- `POST /api/device-communications/scan-fingerprint` - Scan fingerprint
+- `POST /api/device-communications/class-sessions/from-card` - Create class session using RFID card
+- `POST /api/device-communications/class-sessions/from-fingerprint` - Create class session using fingerprint
+
+**Request Body (POST /api/device-communications/heartbeat):**
+```json
+{
+  "firmware_version": "v2.1.0"
+}
+```
+
+**Request Body (POST /api/device-communications/validate-card):**
+```json
+{
+  "card_id": "ABC123XYZ"
+}
+```
+
+**Request Body (POST /api/device-communications/validate-fingerprint):**
+```json
+{
+  "fingerprint_id": "12345"
+}
+```
+
+**Request Body (POST /api/device-communications/scan-card):**
+```json
+{
+  "card_id": "CARD-123"
+}
+```
+
+**Request Body (POST /api/device-communications/scan-fingerprint):**
+```json
+{
+  "fingerprint_id": "FP-123"
+}
+```
+
+**Request Body (POST /api/device-communications/class-sessions/from-card):**
+```json
+{
+  "card_id": "ABC123XYZ"
+}
+```
+
+**Request Body (POST /api/device-communications/class-sessions/from-fingerprint):**
+```json
+{
+  "fingerprint_id": "12345"
+}
+```
+
+**Validation Rules (POST /api/device-communications/heartbeat):**
+- `firmware_version` - optional, string
+
+**Validation Rules (POST /api/device-communications/validate-card):**
+- `card_id` - required, string
+
+**Validation Rules (POST /api/device-communications/validate-fingerprint):**
+- `fingerprint_id` - required, string or integer
+
+**Validation Rules (POST /api/device-communications/scan-card):**
+- `card_id` - required, string
+
+**Validation Rules (POST /api/device-communications/scan-fingerprint):**
+- `fingerprint_id` - required, string or integer
+
+**Validation Rules for class session creation:**
+- `card_id` / `fingerprint_id` - required
+- User must be FACULTY role
+- Must have active schedule period for current day/time
+
+**Response (POST /api/device-communications/heartbeat):**
+```json
+{
+  "status": true,
+  "data": {
+    "board": {
+      "id": 1,
+      "device_id": 1,
+      "board_type": "FINGERPRINT",
+      "mac_address": "AA:BB:CC:DD:EE:FF",
+      "firmware_version": "v2.1.0",
+      "active": true,
+      "last_seen_at": "2025-01-01T08:30:00.000000Z",
+      "last_ip": "192.168.1.100"
+    }
+  }
+}
+```
+
+**Response (GET /api/device-communications/me):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 1,
+    "device_id": 1,
+    "board_type": "FINGERPRINT",
+    "mac_address": "AA:BB:CC:DD:EE:FF",
+    "device": {
+      "id": 1,
+      "device_id": "DEV-001",
+      "door_open_duration_seconds": 5,
+      "active": true
+    }
+  }
+}
+```
+
+**Response (POST /api/device-communications/validate-card):**
+```json
+{
+  "status": true,
+  "data": {
+    "valid": true,
+    "user_id": 1,
+    "attendance_recorded": true
+  }
+}
+```
+
+**Response (POST /api/device-communications/validate-fingerprint):**
+```json
+{
+  "status": true,
+  "data": {
+    "valid": true,
+    "user_id": 1,
+    "attendance_recorded": false
+  }
+}
+```
+
+**Response (POST /api/device-communications/scan-card):**
+```json
+{
+  "status": true,
+  "data": {
+    "scanned": true,
+    "card_id": "CARD-123"
+  }
+}
+```
+
+**Response (POST /api/device-communications/scan-fingerprint):**
+```json
+{
+  "status": true,
+  "data": {
+    "scanned": true,
+    "fingerprint_id": "FP-123"
+  }
+}
+```
+
+**Response (POST /api/device-communications/class-sessions/from-card):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 1,
+    "schedule_period_id": 1,
+    "start_time": "08:00:00",
+    "end_time": null,
+    "active": true
+  }
+}
+```
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "message": "Unauthenticated."
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "status": false,
+  "message": "This action is unauthorized."
+}
+```
+
+**Error Response (422) - Invalid Card/Fingerprint:**
+```json
+{
+  "status": false,
+  "message": "The provided card is not registered."
 }
 ```
 
@@ -1094,23 +2087,115 @@ The API includes authentication for protecting endpoints. To use:
 
 Note: Some endpoints may require authentication. Check individual endpoint documentation for requirements.
 
+### Token Management API (Admin Only)
+
+Admin users can manage API tokens for programmatic access.
+
+- `POST /api/tokens` - Create new API token (admin only)
+- `GET /api/tokens` - List all API tokens (admin only)
+- `DELETE /api/tokens/{tokenId}` - Revoke API token (admin only)
+
+**Request Body (POST /api/tokens):**
+```json
+{
+  "token_name": "My API Token"
+}
+```
+
+**Validation Rules (POST /api/tokens):**
+- `token_name` - required, string, max 255 characters
+
+**Response (POST /api/tokens):**
+```json
+{
+  "status": true,
+  "data": {
+    "token": "1|abcdef123456789...",
+    "abilities": ["*"]
+  }
+}
+```
+
+**Response (GET /api/tokens):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "My API Token",
+      "abilities": ["*"],
+      "created_at": "2025-11-28T10:00:00.000000Z",
+      "last_used_at": null
+    }
+  ]
+}
+```
+
+**Response (DELETE /api/tokens/{tokenId}):**
+```json
+{
+  "status": true,
+  "data": {
+    "message": "Token revoked successfully"
+  }
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "status": false,
+  "message": "Only admin users can create API tokens."
+}
+```
+
 ## Database Schema
 
 See migrations in `/src/database/migrations/` for complete schema.
 
 ### Key Tables
 
-- **users** - System users with roles
+- **users** - System users with roles (includes clearance field for access permissions)
 - **user_fingerprints** - Fingerprint registrations
 - **user_rfids** - RFID card registrations
 - **devices** - Door lock devices
-- **device_boards** - ESP32 boards associated with devices
+- **device_boards** - ESP32 boards associated with devices (includes API token authentication)
 - **rooms** - Rooms with access control
 - **subjects** - Academic subjects
 - **schedules** - Faculty teaching schedules
 - **schedule_periods** - Time periods for schedules
+- **sections** - Academic sections or classes
+- **section_subjects** - Subject assignments to sections with faculty
+- **section_subject_schedules** - Schedule templates for section-subject combinations
+- **section_subject_students** - Student enrollments in section subjects
+- **student_schedules** - Student enrollment in scheduled classes
+- **schedule_sessions** - Actual instances of scheduled classes with real dates
+- **schedule_attendance** - Attendance records for schedule sessions
+- **student_attendance** - Legacy attendance records for class sessions
 - **user_access_logs** - Door access history
 - **user_audit_logs** - User activity audit trail
+
+### Important Field Additions
+
+**Users Table:**
+- `clearance` - Boolean field for special access permissions (default: false)
+
+**Device Boards Table:**
+- `api_token` - Token for device board authentication
+- `last_seen_at` - Timestamp of last heartbeat
+- `last_ip` - IP address of last connection
+
+**Schedule Sessions Table:**
+- `start_date`, `start_time` - When class actually starts
+- `end_date`, `end_time` - When class actually ends
+- Supports auto-creation from schedule templates
+- Time window validation for starting sessions
+
+**Schedule Attendance Table:**
+- `date_in`, `time_in` - Check-in timestamp
+- `date_out`, `time_out` - Check-out timestamp
+- `attendance_status` - PRESENT, ABSENT, LATE, EXCUSED
 
 ## Testing the API
 
@@ -1213,6 +2298,14 @@ Most GET endpoints automatically include related data via eager loading to reduc
 - **Subjects:** No automatic relationships
 - **Schedules:** Includes `user`, `room`, `subject`, and `periods` data
 - **Schedule Periods:** Includes `schedule` data
+- **Sections:** No automatic relationships
+- **Section Subjects:** Includes `section`, `subject`, and `faculty` data
+- **Section Subject Schedules:** Includes `sectionSubject` (with nested relationships) and `room` data
+- **Section Subject Students:** Includes `sectionSubject` and `student` data
+- **Student Schedules:** Includes `student`, `subject`, `schedule`, and `schedulePeriod` data
+- **Schedule Sessions:** Includes `sectionSubjectSchedule`, `faculty`, and `room` data
+- **Schedule Attendance:** Includes `scheduleSession` and `student` data
+- **Class Sessions:** Includes `schedulePeriod` data
 - **User Access Logs:** Includes `user`, `room`, and `device` data
 - **User Audit Logs:** Includes `user` data
 
@@ -1253,6 +2346,27 @@ All boolean fields (`active`, etc.) default to `true` if not provided during cre
 5. Update CORS settings for production
 6. Consider adding pagination for large datasets
 7. Implement filtering and sorting query parameters as needed
+
+### Device Board Authentication
+
+The API includes a special authentication mechanism for ESP32 device boards using API tokens:
+
+1. **Token Generation:** Device boards are automatically assigned API tokens in the database
+2. **Authentication Method:** Use `Authorization: Bearer {device_board_api_token}` header
+3. **Middleware Protection:** Device communication endpoints use `EnsureDeviceBoard` middleware
+4. **Heartbeat Updates:** Devices send periodic heartbeats to update `last_seen_at` and `last_ip`
+
+**Example Device Request:**
+```bash
+curl -H "Authorization: Bearer 12345abcdef..." \
+  -X POST http://localhost:8021/api/device-communications/heartbeat \
+  -d '{"firmware_version": "v2.1.0"}'
+```
+
+**Device-Specific Endpoints:**
+- `/api/device-communications/*` - All endpoints require device board authentication
+- Automatically prevents regular users from accessing device-specific functions
+- Enables automatic attendance recording for student scans during active classes
 
 ## Support
 
