@@ -13,14 +13,27 @@ class SectionSubjectStudentController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function index(Request $request)
     {
         $records = SectionSubjectStudent::with([
             'sectionSubject.section',
             'sectionSubject.subject',
             'sectionSubject.faculty',
             'student',
-        ])->get();
+        ])
+            ->when($request->filled('section_id'), fn ($query) => $query->whereHas(
+                'sectionSubject',
+                fn ($sectionSubjectQuery) => $sectionSubjectQuery->where('section_id', $request->input('section_id'))
+            ))
+            ->when($request->filled('subject_id'), fn ($query) => $query->whereHas(
+                'sectionSubject',
+                fn ($sectionSubjectQuery) => $sectionSubjectQuery->where('subject_id', $request->input('subject_id'))
+            ))
+            ->when($request->filled('faculty_id'), fn ($query) => $query->whereHas(
+                'sectionSubject',
+                fn ($sectionSubjectQuery) => $sectionSubjectQuery->where('faculty_id', $request->input('faculty_id'))
+            ))
+            ->get();
         return $this->successResponse($records);
     }
 

@@ -117,4 +117,36 @@ class SectionSubjectControllerTest extends TestCase
                 'label' => sprintf('SECTION A - SUBJECT 1 - %s', $sectionSubject->faculty->name),
             ]);
     }
+
+    public function test_can_filter_section_subjects_by_section_and_subject()
+    {
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $sectionA = Section::factory()->create();
+        $sectionB = Section::factory()->create();
+        $subject1 = Subject::factory()->create();
+        $subject2 = Subject::factory()->create();
+
+        $matching = SectionSubject::factory()->create([
+            'section_id' => $sectionA->id,
+            'subject_id' => $subject1->id,
+        ]);
+
+        SectionSubject::factory()->create([
+            'section_id' => $sectionA->id,
+            'subject_id' => $subject2->id,
+        ]);
+
+        SectionSubject::factory()->create([
+            'section_id' => $sectionB->id,
+            'subject_id' => $subject1->id,
+        ]);
+
+        $response = $this->actingAs($actingUser)->getJson(
+            sprintf('/api/section-subjects?section_id=%d&subject_id=%d', $sectionA->id, $subject1->id)
+        );
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matching->id);
+    }
 }

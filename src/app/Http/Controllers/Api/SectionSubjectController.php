@@ -13,9 +13,12 @@ class SectionSubjectController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function index(Request $request)
     {
-        $records = SectionSubject::with(['section', 'subject', 'faculty'])->get();
+        $records = SectionSubject::with(['section', 'subject', 'faculty'])
+            ->when($request->filled('section_id'), fn ($query) => $query->where('section_id', $request->input('section_id')))
+            ->when($request->filled('subject_id'), fn ($query) => $query->where('subject_id', $request->input('subject_id')))
+            ->get();
         return $this->successResponse($records);
     }
 

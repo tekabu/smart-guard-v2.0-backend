@@ -22,9 +22,20 @@ class SectionSubjectScheduleController extends Controller
         'room',
     ];
 
-    public function index()
+    public function index(Request $request)
     {
-        $records = SectionSubjectSchedule::with(self::RELATIONS)->get();
+        $records = SectionSubjectSchedule::with(self::RELATIONS)
+            ->when($request->filled('section_id'), fn ($query) => $query->whereHas(
+                'sectionSubject',
+                fn ($sectionSubjectQuery) => $sectionSubjectQuery->where('section_id', $request->input('section_id'))
+            ))
+            ->when($request->filled('subject_id'), fn ($query) => $query->whereHas(
+                'sectionSubject',
+                fn ($sectionSubjectQuery) => $sectionSubjectQuery->where('subject_id', $request->input('subject_id'))
+            ))
+            ->when($request->filled('day_of_week'), fn ($query) => $query->where('day_of_week', $request->input('day_of_week')))
+            ->when($request->filled('room_id'), fn ($query) => $query->where('room_id', $request->input('room_id')))
+            ->get();
 
         return $this->successResponse($records);
     }

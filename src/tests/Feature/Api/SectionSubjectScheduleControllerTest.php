@@ -3,8 +3,10 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Room;
+use App\Models\Section;
 use App\Models\SectionSubject;
 use App\Models\SectionSubjectSchedule;
+use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -238,5 +240,70 @@ class SectionSubjectScheduleControllerTest extends TestCase
             ->assertJsonPath('data.section_subject.section.id', $schedule->sectionSubject->section->id)
             ->assertJsonPath('data.section_subject.subject.id', $schedule->sectionSubject->subject->id)
             ->assertJsonPath('data.section_subject.faculty.id', $schedule->sectionSubject->faculty->id);
+    }
+
+    public function test_can_filter_section_subject_schedules_by_section_subject_day_and_room()
+    {
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $section = Section::factory()->create();
+        $otherSection = Section::factory()->create();
+        $subject = Subject::factory()->create();
+        $otherSubject = Subject::factory()->create();
+        $room = Room::factory()->create();
+        $otherRoom = Room::factory()->create();
+
+        $matchingSectionSubject = SectionSubject::factory()->create([
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+        ]);
+
+        $matchingSchedule = SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $matchingSectionSubject->id,
+            'day_of_week' => 'FRIDAY',
+            'room_id' => $room->id,
+        ]);
+
+        SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => SectionSubject::factory()->create([
+                'section_id' => $section->id,
+                'subject_id' => $otherSubject->id,
+            ])->id,
+            'day_of_week' => 'FRIDAY',
+            'room_id' => $room->id,
+        ]);
+
+        SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => SectionSubject::factory()->create([
+                'section_id' => $otherSection->id,
+                'subject_id' => $subject->id,
+            ])->id,
+            'day_of_week' => 'FRIDAY',
+            'room_id' => $room->id,
+        ]);
+
+        SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $matchingSectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'room_id' => $room->id,
+        ]);
+
+        SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $matchingSectionSubject->id,
+            'day_of_week' => 'FRIDAY',
+            'room_id' => $otherRoom->id,
+        ]);
+
+        $query = http_build_query([
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+            'day_of_week' => 'FRIDAY',
+            'room_id' => $room->id,
+        ]);
+
+        $response = $this->actingAs($actingUser)->getJson("/api/section-subject-schedules?{$query}");
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matchingSchedule->id);
     }
 }

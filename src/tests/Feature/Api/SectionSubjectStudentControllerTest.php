@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Section;
 use App\Models\SectionSubject;
 use App\Models\SectionSubjectStudent;
+use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -77,5 +79,62 @@ class SectionSubjectStudentControllerTest extends TestCase
             ->assertJsonPath('data.section_subject.section.id', $sectionSubjectStudent->sectionSubject->section->id)
             ->assertJsonPath('data.section_subject.subject.id', $sectionSubjectStudent->sectionSubject->subject->id)
             ->assertJsonPath('data.section_subject.faculty.id', $sectionSubjectStudent->sectionSubject->faculty->id);
+    }
+
+    public function test_can_filter_section_subject_students_by_section_subject_and_faculty()
+    {
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $section = Section::factory()->create();
+        $otherSection = Section::factory()->create();
+        $subject = Subject::factory()->create();
+        $otherSubject = Subject::factory()->create();
+        $faculty = User::factory()->create(['role' => 'FACULTY']);
+        $otherFaculty = User::factory()->create(['role' => 'FACULTY']);
+
+        $matchingSectionSubject = SectionSubject::factory()->create([
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+            'faculty_id' => $faculty->id,
+        ]);
+
+        $matchingStudent = SectionSubjectStudent::factory()->create([
+            'section_subject_id' => $matchingSectionSubject->id,
+        ]);
+
+        SectionSubjectStudent::factory()->create([
+            'section_subject_id' => SectionSubject::factory()->create([
+                'section_id' => $section->id,
+                'subject_id' => $otherSubject->id,
+                'faculty_id' => $faculty->id,
+            ])->id,
+        ]);
+
+        SectionSubjectStudent::factory()->create([
+            'section_subject_id' => SectionSubject::factory()->create([
+                'section_id' => $otherSection->id,
+                'subject_id' => $subject->id,
+                'faculty_id' => $faculty->id,
+            ])->id,
+        ]);
+
+        SectionSubjectStudent::factory()->create([
+            'section_subject_id' => SectionSubject::factory()->create([
+                'section_id' => $section->id,
+                'subject_id' => $subject->id,
+                'faculty_id' => $otherFaculty->id,
+            ])->id,
+        ]);
+
+        $query = http_build_query([
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+            'faculty_id' => $faculty->id,
+        ]);
+
+        $response = $this->actingAs($actingUser)->getJson("/api/section-subject-students?{$query}");
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matchingStudent->id);
     }
 }
