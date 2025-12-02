@@ -29,7 +29,7 @@ class ScheduleSessionSeeder extends Seeder
                 continue;
             }
 
-            $sessionsToCreate = rand(1, 2);
+            $sessionsToCreate = rand(1, 5);
             $baseDate = $this->resolveBaseDate($schedule->day_of_week);
 
             for ($i = 0; $i < $sessionsToCreate; $i++) {
