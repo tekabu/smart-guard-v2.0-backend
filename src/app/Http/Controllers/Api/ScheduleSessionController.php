@@ -28,6 +28,70 @@ class ScheduleSessionController extends Controller
         return $this->successResponse(['count' => ScheduleSession::count()]);
     }
 
+    public function overview(Request $request)
+    {
+        $validated = $request->validate([
+            'section_id' => 'sometimes|integer|exists:sections,id',
+            'subject_id' => 'sometimes|integer|exists:subjects,id',
+            'faculty_id' => 'sometimes|integer|exists:users,id',
+            'day_of_week' => ['sometimes', Rule::in(self::DAYS)],
+            'start_date' => 'sometimes|date',
+            'has_class' => 'sometimes|boolean',
+        ]);
+
+        $query = ScheduleSession::query()
+            ->with([
+                'sectionSubjectSchedule.sectionSubject.section',
+                'sectionSubjectSchedule.sectionSubject.subject',
+                'faculty',
+            ]);
+
+        if (isset($validated['section_id'])) {
+            $query->whereHas('sectionSubjectSchedule.sectionSubject', function ($q) use ($validated) {
+                $q->where('section_id', $validated['section_id']);
+            });
+        }
+
+        if (isset($validated['subject_id'])) {
+            $query->whereHas('sectionSubjectSchedule.sectionSubject', function ($q) use ($validated) {
+                $q->where('subject_id', $validated['subject_id']);
+            });
+        }
+
+        if (isset($validated['faculty_id'])) {
+            $query->where('faculty_id', $validated['faculty_id']);
+        }
+
+        if (isset($validated['day_of_week'])) {
+            $query->where('day_of_week', $validated['day_of_week']);
+        }
+
+        if (isset($validated['start_date'])) {
+            $query->whereDate('start_date', $validated['start_date']);
+        }
+
+        if (!empty($validated['has_class'])) {
+            $query->whereNotNull('start_time');
+        }
+
+        $records = $query->get()->map(function (ScheduleSession $session) {
+            $sectionSubject = $session->sectionSubjectSchedule?->sectionSubject;
+
+            return [
+                'id' => $session->id,
+                'section' => $sectionSubject?->section?->section,
+                'subject' => $sectionSubject?->subject?->subject,
+                'faculty' => $session->faculty?->name ?? $sectionSubject?->faculty?->name,
+                'day_of_week' => $session->day_of_week,
+                'start_date' => $session->start_date,
+                'start_time' => $session->start_time,
+                'end_time' => $session->end_time,
+            ];
+        })->values();
+
+        return $this->successResponse($records);
+    }
+
     public function store(Request $request)
     {
         $validated = $this->validatePayload($request);

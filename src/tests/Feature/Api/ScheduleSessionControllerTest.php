@@ -175,4 +175,65 @@ class ScheduleSessionControllerTest extends TestCase
 
         $response->assertStatus(422)->assertJsonValidationErrors(['section_subject_schedule_id']);
     }
+
+    public function test_can_get_schedule_session_overview_with_filters()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $faculty = User::factory()->create(['role' => 'FACULTY']);
+
+        $matchingSession = ScheduleSession::factory()->create([
+            'day_of_week' => 'MONDAY',
+            'start_date' => '2025-01-01',
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+            'faculty_id' => $faculty->id,
+        ]);
+
+        ScheduleSession::factory()->create([
+            'day_of_week' => 'TUESDAY',
+            'start_date' => '2025-02-01',
+        ]);
+
+        $sectionSubject = $matchingSession->sectionSubjectSchedule->sectionSubject;
+        $section = $sectionSubject->section;
+        $subject = $sectionSubject->subject;
+
+        $response = $this->actingAs($admin)->getJson('/api/schedule-sessions/overview?' . http_build_query([
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+            'faculty_id' => $faculty->id,
+            'day_of_week' => 'MONDAY',
+            'start_date' => '2025-01-01',
+        ]));
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.section', $section->section)
+            ->assertJsonPath('data.0.subject', $subject->subject)
+            ->assertJsonPath('data.0.faculty', $faculty->name)
+            ->assertJsonPath('data.0.day_of_week', 'MONDAY')
+            ->assertJsonPath('data.0.start_date', '2025-01-01')
+            ->assertJsonPath('data.0.start_time', '08:00:00')
+            ->assertJsonPath('data.0.end_time', '09:00:00');
+    }
+
+    public function test_can_filter_schedule_sessions_that_have_class()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+
+        $sessionWithClass = ScheduleSession::factory()->create([
+            'start_time' => '08:00:00',
+        ]);
+
+        ScheduleSession::factory()->create([
+            'start_time' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/api/schedule-sessions/overview?has_class=1');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $sessionWithClass->id)
+            ->assertJsonPath('data.0.start_time', '08:00:00');
+    }
 }
