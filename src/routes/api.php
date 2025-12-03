@@ -79,9 +79,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource("users", UserController::class);
 
     // User Fingerprints API
+    Route::get('user-fingerprints/fingerprint/{fingerprintId}', [UserFingerprintController::class, 'showByFingerprintId']);
     Route::apiResource("user-fingerprints", UserFingerprintController::class);
 
     // User RFIDs API
+    Route::get('user-rfids/card/{cardId}', [UserRfidController::class, 'showByCardId']);
     Route::apiResource("user-rfids", UserRfidController::class);
 
     // Devices API
@@ -99,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource("sections", SectionController::class);
     Route::get('section-subjects/options', [SectionSubjectController::class, 'options']);
     Route::apiResource("section-subjects", SectionSubjectController::class);
+    Route::get('section-subject-schedules/faculty/{facultyId}/current', [SectionSubjectScheduleController::class, 'currentScheduleForFaculty']);
     Route::apiResource("section-subject-schedules", SectionSubjectScheduleController::class);
     Route::apiResource("section-subject-students", SectionSubjectStudentController::class);
 

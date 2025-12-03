@@ -48,6 +48,16 @@ class UserRfidController extends Controller
         return $this->successResponse($record);
     }
 
+    public function showByCardId(string $cardId)
+    {
+        $record = UserRfid::query()
+            ->with(['user'])
+            ->where('card_id', $cardId)
+            ->firstOrFail();
+
+        return $this->successResponse($record);
+    }
+
     public function update(Request $request, string $id)
     {
         $record = UserRfid::findOrFail($id);

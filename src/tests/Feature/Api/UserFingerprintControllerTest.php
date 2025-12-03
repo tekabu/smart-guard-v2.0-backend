@@ -44,6 +44,19 @@ class UserFingerprintControllerTest extends TestCase
             ->assertJsonPath('data.fingerprint_id', $fingerprint->fingerprint_id);
     }
 
+    public function test_can_show_fingerprint_by_fingerprint_id()
+    {
+        $user = User::factory()->create(); // Acting user
+        $fingerprint = UserFingerprint::factory()->create(['fingerprint_id' => 777]);
+
+        $response = $this->actingAs($user)->getJson('/api/user-fingerprints/fingerprint/' . $fingerprint->fingerprint_id);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $fingerprint->id)
+            ->assertJsonPath('data.fingerprint_id', 777);
+    }
+
     public function test_can_update_fingerprint()
     {
         $user = User::factory()->create(); // Acting user

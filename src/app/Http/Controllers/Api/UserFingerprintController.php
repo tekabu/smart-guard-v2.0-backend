@@ -47,6 +47,16 @@ class UserFingerprintController extends Controller
         return $this->successResponse($record);
     }
 
+    public function showByFingerprintId(string $fingerprintId)
+    {
+        $record = UserFingerprint::query()
+            ->with(['user'])
+            ->where('fingerprint_id', $fingerprintId)
+            ->firstOrFail();
+
+        return $this->successResponse($record);
+    }
+
     public function update(Request $request, string $id)
     {
         $record = UserFingerprint::findOrFail($id);

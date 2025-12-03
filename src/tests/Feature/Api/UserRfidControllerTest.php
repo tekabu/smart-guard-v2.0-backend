@@ -44,6 +44,19 @@ class UserRfidControllerTest extends TestCase
             ->assertJsonPath('data.card_id', $rfid->card_id);
     }
 
+    public function test_can_show_rfid_by_card_id()
+    {
+        $user = User::factory()->create(); // Acting user
+        $rfid = UserRfid::factory()->create(['card_id' => 'CARD123']);
+
+        $response = $this->actingAs($user)->getJson('/api/user-rfids/card/' . $rfid->card_id);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['status', 'data'])
+            ->assertJsonPath('data.id', $rfid->id)
+            ->assertJsonPath('data.card_id', 'CARD123');
+    }
+
     public function test_can_update_rfid()
     {
         $user = User::factory()->create(); // Acting user

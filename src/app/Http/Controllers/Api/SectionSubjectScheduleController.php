@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\SectionSubject;
 use App\Models\SectionSubjectSchedule;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
@@ -64,6 +65,32 @@ class SectionSubjectScheduleController extends Controller
         $record = SectionSubjectSchedule::with(self::RELATIONS)->findOrFail($id);
 
         return $this->successResponse($record);
+    }
+
+    public function currentScheduleForFaculty(string $facultyId)
+    {
+        $facultyAssigned = SectionSubject::where('faculty_id', $facultyId)->exists();
+
+        if (! $facultyAssigned) {
+            return $this->errorResponse('Faculty is not assigned to any section subject.', 404);
+        }
+
+        $now = Carbon::now();
+        $currentDay = strtoupper($now->format('l'));
+        $currentTime = $now->format('H:i:s');
+
+        $schedules = SectionSubjectSchedule::with(self::RELATIONS)
+            ->whereHas('sectionSubject', fn ($query) => $query->where('faculty_id', $facultyId))
+            ->where('day_of_week', $currentDay)
+            ->where('start_time', '<=', $currentTime)
+            ->where('end_time', '>=', $currentTime)
+            ->get();
+
+        if ($schedules->isEmpty()) {
+            return $this->errorResponse('Faculty has no schedule for the current time window.', 404);
+        }
+
+        return $this->successResponse($schedules);
     }
 
     public function update(Request $request, string $id)

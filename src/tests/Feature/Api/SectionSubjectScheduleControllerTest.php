@@ -8,6 +8,7 @@ use App\Models\SectionSubject;
 use App\Models\SectionSubjectSchedule;
 use App\Models\Subject;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -305,5 +306,74 @@ class SectionSubjectScheduleControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $matchingSchedule->id);
+    }
+
+    public function test_can_fetch_current_schedule_for_faculty()
+    {
+        Carbon::setTestNow(Carbon::parse('2023-09-04 10:00:00'));
+
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $faculty = User::factory()->create();
+        $sectionSubject = SectionSubject::factory()->create(['faculty_id' => $faculty->id]);
+        $schedule = SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+        ]);
+
+        SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'start_time' => '12:00:00',
+            'end_time' => '13:00:00',
+        ]);
+
+        $response = $this->actingAs($actingUser)
+            ->getJson("/api/section-subject-schedules/faculty/{$faculty->id}/current");
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $schedule->id);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_current_schedule_route_returns_404_when_faculty_unassigned()
+    {
+        Carbon::setTestNow(Carbon::parse('2023-09-04 10:00:00'));
+
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $faculty = User::factory()->create();
+
+        $response = $this->actingAs($actingUser)
+            ->getJson("/api/section-subject-schedules/faculty/{$faculty->id}/current");
+
+        $response->assertStatus(404)->assertJson(['status' => false]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_current_schedule_route_returns_404_when_no_schedule_in_window()
+    {
+        Carbon::setTestNow(Carbon::parse('2023-09-04 10:00:00'));
+
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $faculty = User::factory()->create();
+        $sectionSubject = SectionSubject::factory()->create(['faculty_id' => $faculty->id]);
+
+        SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'start_time' => '12:00:00',
+            'end_time' => '13:00:00',
+        ]);
+
+        $response = $this->actingAs($actingUser)
+            ->getJson("/api/section-subject-schedules/faculty/{$faculty->id}/current");
+
+        $response->assertStatus(404)->assertJson(['status' => false]);
+
+        Carbon::setTestNow();
     }
 }
