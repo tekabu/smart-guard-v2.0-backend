@@ -1,0 +1,48 @@
+create new python smart_guard_listener_student_attendance.py that connects to mqtt and listen to topics:
+
+  topics:
+  dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-rfid-response
+
+  when payload arrives verify that key exists
+  {
+      "data": "{{data}}, -> USER_CARD_ID
+      "mode": "VERIFY"
+  }
+
+  when payload arrives in dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-rfid-response
+
+  curl --location 'http://172.17.38.182:8021/api/user-rfids/card/{{USER_CARD_ID}}' \
+  --header 'Authorization: Bearer 58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef'
+
+  if success api will response
+  {
+      "status": true,
+      "data": {
+          "id": 16,
+          "user_id": 66, -> STUDENT_ID
+          "card_id": "47E9B46AAC",
+          "active": true,
+          "created_at": "2025-12-02T03:42:54.000000Z",
+          "updated_at": "2025-12-02T03:42:54.000000Z",
+          "user": {
+              "id": 66,
+              "name": "Marquis Stracke",
+              "email": "kabshire@example.com",
+              "email_verified_at": "2025-12-02T03:42:26.000000Z",
+              "created_at": "2025-12-02T03:42:32.000000Z",
+              "updated_at": "2025-12-02T03:42:32.000000Z",
+              "role": "STAFF",
+              "active": true,
+              "last_accessed_at": null,
+              "student_id": null,
+              "faculty_id": null,
+              "course": null,
+              "year_level": null,
+              "attendance_rate": null,
+              "department": null,
+              "clearance": false
+          }
+      }
+  }
+
+  if user.role is STUDENT request to this api /api/section-subject-schedules/student/{{STTUDENT_ID}}/attendance

@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ScheduleAttendance;
+use App\Models\ScheduleSession;
 use App\Models\SectionSubject;
 use App\Models\SectionSubjectSchedule;
+use App\Models\SectionSubjectStudent;
+use App\Models\User;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -91,6 +95,75 @@ class SectionSubjectScheduleController extends Controller
         }
 
         return $this->successResponse($schedules);
+    }
+
+    public function recordStudentAttendance(string $studentId)
+    {
+        $student = User::query()
+            ->where('role', 'STUDENT')
+            ->where('id', $studentId)
+            ->first();
+
+        if (! $student) {
+            return $this->errorResponse('Student not found.', 404);
+        }
+
+        $assignedSectionSubjectIds = SectionSubjectStudent::query()
+            ->where('student_id', $studentId)
+            ->pluck('section_subject_id');
+
+        if ($assignedSectionSubjectIds->isEmpty()) {
+            return $this->errorResponse('Student is not assigned to any section subjects.', 422);
+        }
+
+        $now = Carbon::now();
+        $currentDay = strtoupper($now->format('l'));
+        $currentTime = $now->format('H:i:s');
+
+        $session = ScheduleSession::with([
+            'sectionSubjectSchedule.sectionSubject.section',
+            'sectionSubjectSchedule.sectionSubject.subject',
+            'sectionSubjectSchedule.sectionSubject.faculty',
+            'sectionSubjectSchedule.room',
+            'faculty',
+        ])
+            ->where('day_of_week', $currentDay)
+            ->whereHas('sectionSubjectSchedule', function ($query) use ($currentTime, $assignedSectionSubjectIds) {
+                $query->whereIn('section_subject_id', $assignedSectionSubjectIds)
+                    ->where('start_time', '<=', $currentTime)
+                    ->where('end_time', '>=', $currentTime);
+            })
+            ->first();
+
+        if (! $session) {
+            return $this->errorResponse('No active schedule sessions for the student at the current time.', 404);
+        }
+
+        $attendance = ScheduleAttendance::firstOrCreate(
+            [
+                'schedule_session_id' => $session->id,
+                'student_id' => (int) $studentId,
+                'date_in' => $now->toDateString(),
+            ],
+            [
+                'time_in' => $currentTime,
+                'attendance_status' => 'PRESENT',
+            ]
+        );
+
+        $statusCode = $attendance->wasRecentlyCreated ? 201 : 200;
+
+        return $this->successResponse(
+            $attendance->load([
+                'student',
+                'scheduleSession.sectionSubjectSchedule.sectionSubject.section',
+                'scheduleSession.sectionSubjectSchedule.sectionSubject.subject',
+                'scheduleSession.sectionSubjectSchedule.sectionSubject.faculty',
+                'scheduleSession.sectionSubjectSchedule.room',
+                'scheduleSession.faculty',
+            ]),
+            $statusCode
+        );
     }
 
     public function update(Request $request, string $id)

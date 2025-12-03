@@ -102,6 +102,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('section-subjects/options', [SectionSubjectController::class, 'options']);
     Route::apiResource("section-subjects", SectionSubjectController::class);
     Route::get('section-subject-schedules/faculty/{facultyId}/current', [SectionSubjectScheduleController::class, 'currentScheduleForFaculty']);
+    Route::post('section-subject-schedules/student/{studentId}/attendance', [SectionSubjectScheduleController::class, 'recordStudentAttendance']);
     Route::apiResource("section-subject-schedules", SectionSubjectScheduleController::class);
     Route::apiResource("section-subject-students", SectionSubjectStudentController::class);
 

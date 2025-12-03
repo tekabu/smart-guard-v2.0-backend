@@ -3,9 +3,12 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Room;
+use App\Models\ScheduleAttendance;
+use App\Models\ScheduleSession;
 use App\Models\Section;
 use App\Models\SectionSubject;
 use App\Models\SectionSubjectSchedule;
+use App\Models\SectionSubjectStudent;
 use App\Models\Subject;
 use App\Models\User;
 use Carbon\Carbon;
@@ -373,6 +376,167 @@ class SectionSubjectScheduleControllerTest extends TestCase
             ->getJson("/api/section-subject-schedules/faculty/{$faculty->id}/current");
 
         $response->assertStatus(404)->assertJson(['status' => false]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_student_attendance_route_creates_record()
+    {
+        Carbon::setTestNow(Carbon::parse('2023-09-04 09:30:00'));
+
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+
+        $sectionSubject = SectionSubject::factory()->create();
+        SectionSubjectStudent::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'student_id' => $student->id,
+        ]);
+
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+        ]);
+
+        $session = ScheduleSession::factory()->create([
+            'section_subject_schedule_id' => $sectionSchedule->id,
+            'day_of_week' => 'MONDAY',
+            'room_id' => $sectionSchedule->room_id,
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+        ]);
+
+        $response = $this->actingAs($actingUser)
+            ->postJson("/api/section-subject-schedules/student/{$student->id}/attendance");
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.schedule_session_id', $session->id)
+            ->assertJsonPath('data.student_id', $student->id);
+
+        $this->assertDatabaseHas('schedule_attendance', [
+            'schedule_session_id' => $session->id,
+            'student_id' => $student->id,
+            'attendance_status' => 'PRESENT',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_student_attendance_route_handles_existing_record()
+    {
+        Carbon::setTestNow(Carbon::parse('2023-09-04 09:30:00'));
+
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+        $sectionSubject = SectionSubject::factory()->create();
+        SectionSubjectStudent::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'student_id' => $student->id,
+        ]);
+
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+        ]);
+
+        $session = ScheduleSession::factory()->create([
+            'section_subject_schedule_id' => $sectionSchedule->id,
+            'day_of_week' => 'MONDAY',
+            'room_id' => $sectionSchedule->room_id,
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+        ]);
+
+        ScheduleAttendance::create([
+            'schedule_session_id' => $session->id,
+            'student_id' => $student->id,
+            'date_in' => Carbon::now()->toDateString(),
+            'time_in' => '09:05:00',
+            'attendance_status' => 'PRESENT',
+        ]);
+
+        $response = $this->actingAs($actingUser)
+            ->postJson("/api/section-subject-schedules/student/{$student->id}/attendance");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.schedule_session_id', $session->id)
+            ->assertJsonPath('data.student_id', $student->id);
+
+        $this->assertDatabaseCount('schedule_attendance', 1);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_student_attendance_route_requires_membership()
+    {
+        Carbon::setTestNow(Carbon::parse('2023-09-04 09:30:00'));
+
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+        $sectionSubject = SectionSubject::factory()->create();
+
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+        ]);
+
+        ScheduleSession::factory()->create([
+            'section_subject_schedule_id' => $sectionSchedule->id,
+            'day_of_week' => 'MONDAY',
+            'room_id' => $sectionSchedule->room_id,
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+        ]);
+
+        $response = $this->actingAs($actingUser)
+            ->postJson("/api/section-subject-schedules/student/{$student->id}/attendance");
+
+        $response->assertStatus(422)->assertJson(['status' => false]);
+
+        $this->assertDatabaseCount('schedule_attendance', 0);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_student_attendance_route_requires_active_session()
+    {
+        Carbon::setTestNow(Carbon::parse('2023-09-04 09:30:00'));
+
+        $actingUser = User::factory()->create(['role' => 'ADMIN']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+        $sectionSubject = SectionSubject::factory()->create();
+        SectionSubjectStudent::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'student_id' => $student->id,
+        ]);
+
+        $sectionSchedule = SectionSubjectSchedule::factory()->create([
+            'section_subject_id' => $sectionSubject->id,
+            'day_of_week' => 'MONDAY',
+            'start_time' => '12:00:00',
+            'end_time' => '13:00:00',
+        ]);
+
+        ScheduleSession::factory()->create([
+            'section_subject_schedule_id' => $sectionSchedule->id,
+            'day_of_week' => 'MONDAY',
+            'room_id' => $sectionSchedule->room_id,
+            'start_time' => '12:00:00',
+            'end_time' => '13:00:00',
+        ]);
+
+        $response = $this->actingAs($actingUser)
+            ->postJson("/api/section-subject-schedules/student/{$student->id}/attendance");
+
+        $response->assertStatus(404)->assertJson(['status' => false]);
+
+        $this->assertDatabaseCount('schedule_attendance', 0);
 
         Carbon::setTestNow();
     }

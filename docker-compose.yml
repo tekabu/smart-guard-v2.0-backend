@@ -60,15 +60,32 @@ services:
     networks:
       - smart-guard
 
-  smart-guard-listener-create-session:
+  smart-guard-schedule-session:
     build: ./python
-    container_name: smart-guard-python-create-session
+    container_name: smart-guard-python-schedule-session
     environment:
       MQTT_BROKER: ${MQTT_BROKER:-broker.emqx.io}
       MQTT_PORT: ${MQTT_PORT:-1883}
       MQTT_USERNAME: ${MQTT_USERNAME:-}
       MQTT_PASSWORD: ${MQTT_PASSWORD:-}
       MQTT_TOPICS: ${MQTT_TOPICS:-dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-rfid-response}
+      API_BASE_URL: ${API_BASE_URL:-http://smart-guard-nginx/api}
+      API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    restart: unless-stopped
+    networks:
+      - smart-guard
+
+  smart-guard-student-attendance:
+    build: ./python
+    container_name: smart-guard-python-student-attendance
+    command: python smart_guard_listener_student_attendance.py
+    environment:
+      MQTT_BROKER: ${MQTT_BROKER:-broker.emqx.io}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      MQTT_TOPIC: ${MQTT_TOPIC:-dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-rfid-response}
       API_BASE_URL: ${API_BASE_URL:-http://smart-guard-nginx/api}
       API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
