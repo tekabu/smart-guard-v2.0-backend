@@ -99,7 +99,7 @@ def fetch_faculty_schedule(faculty_id: Any) -> List[Dict[str, Any]]:
     return data
 
 
-def create_schedule_session(section_subject_schedule_id: Any) -> bool:
+def create_schedule_session(section_subject_schedule_id: Any, client: mqtt.Client) -> bool:
     url = f"{API_BASE}/schedule-sessions/create"
     params = {"start": "1"}
     data = {"section_subject_schedule_id": str(section_subject_schedule_id)}
@@ -129,11 +129,42 @@ def create_schedule_session(section_subject_schedule_id: Any) -> bool:
         )
         return False
 
+    
+
+    # Send MQTT message to lock topic
+    send_lock_command(client)
+    
     LOGGER.info("Created session for schedule %s", section_subject_schedule_id)
     return True
 
 
-def process_rfid_payload(message: Dict[str, Any]) -> None:
+def send_lock_command(client: mqtt.Client) -> None:
+    """
+    Send lock command to MQTT topic: "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock"
+    {
+        "mode": "OPEN",
+        "delay": 3
+    }
+    """
+    topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock"
+    payload = {
+        "mode": "OPEN",
+        "delay": 3
+    }
+    
+    try:
+        result = client.publish(topic, json.dumps(payload))
+        
+        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+            LOGGER.info("Successfully sent lock command to topic %s", topic)
+        else:
+            LOGGER.error("Failed to send lock command to topic %s: %s", topic, result.rc)
+            
+    except Exception as exc:
+        LOGGER.error("Error sending lock command: %s", exc)
+
+
+def process_rfid_payload(message: Dict[str, Any], client: mqtt.Client) -> None:
     if "data" not in message or "mode" not in message:
         LOGGER.warning("Payload missing required keys: %s", message)
         return
@@ -179,12 +210,12 @@ def process_rfid_payload(message: Dict[str, Any]) -> None:
         if schedule_id is None:
             LOGGER.warning("Schedule item missing id: %s", schedule)
             continue
-        create_schedule_session(schedule_id)
+        create_schedule_session(schedule_id, client)
 
 
-def process_payload(topic: str, message: Dict[str, Any]) -> None:
+def process_payload(topic: str, message: Dict[str, Any], client: mqtt.Client) -> None:
     if topic.endswith("smart-guard-rfid-response"):
-        process_rfid_payload(message)
+        process_rfid_payload(message, client)
     elif topic.endswith("smart-guard-figerprint-response"):
         LOGGER.info("Fingerprint topic received payload, no handler implemented: %s", message)
     else:
@@ -209,7 +240,7 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
         return
 
     LOGGER.debug("Message on %s: %s", msg.topic, message)
-    process_payload(msg.topic, message)
+    process_payload(msg.topic, message, client)
 
 
 def build_mqtt_client() -> mqtt.Client:
