@@ -9,6 +9,7 @@ use App\Models\SectionSubject;
 use App\Models\SectionSubjectSchedule;
 use App\Models\SectionSubjectStudent;
 use App\Models\User;
+use App\Services\Mqtt\SmartGuardMqttPublisher;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,6 +27,10 @@ class SectionSubjectScheduleController extends Controller
         'sectionSubject.faculty',
         'room',
     ];
+
+    public function __construct(private readonly SmartGuardMqttPublisher $mqttPublisher)
+    {
+    }
 
     public function index(Request $request)
     {
@@ -153,6 +158,8 @@ class SectionSubjectScheduleController extends Controller
 
         $statusCode = $attendance->wasRecentlyCreated ? 201 : 200;
 
+        $this->broadcastStudentAttendance($student);
+
         return $this->successResponse(
             $attendance->load([
                 'student',
@@ -252,5 +259,13 @@ class SectionSubjectScheduleController extends Controller
                 'start_time' => ['The specified time range conflicts with an existing schedule for this room and day.'],
             ]);
         }
+    }
+
+    private function broadcastStudentAttendance(User $student): void
+    {
+        $this->mqttPublisher->publish([
+            'mode' => 'ATTENDANCE',
+            'name' => $student->name ?? '',
+        ]);
     }
 }

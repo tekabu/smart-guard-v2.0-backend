@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ScheduleSession;
 use App\Models\SectionSubjectSchedule;
+use App\Services\Mqtt\SmartGuardMqttPublisher;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ class ScheduleSessionController extends Controller
     use ApiResponse;
 
     private const DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+    public function __construct(private readonly SmartGuardMqttPublisher $mqttPublisher)
+    {
+    }
 
     public function index()
     {
@@ -98,7 +103,19 @@ class ScheduleSessionController extends Controller
 
         $record = ScheduleSession::create($validated);
 
-        return $this->successResponse($record->load(['sectionSubjectSchedule', 'faculty', 'room']), 201);
+        $record->load(['sectionSubjectSchedule', 'faculty', 'room']);
+
+        if ($this->shouldBroadcastSessionCreation($request)) {
+            $record->loadMissing([
+                'sectionSubjectSchedule.sectionSubject.section',
+                'sectionSubjectSchedule.sectionSubject.subject',
+                'sectionSubjectSchedule.sectionSubject.faculty',
+            ]);
+
+            $this->broadcastSessionCreated($record);
+        }
+
+        return $this->successResponse($record, 201);
     }
 
     public function createFromSchedule(Request $request)
@@ -207,6 +224,24 @@ class ScheduleSessionController extends Controller
         $record->delete();
 
         return response()->json(null, 204);
+    }
+
+    private function broadcastSessionCreated(ScheduleSession $session): void
+    {
+        $sectionSubject = $session->sectionSubjectSchedule?->sectionSubject;
+
+        $this->mqttPublisher->publish([
+            'mode' => 'CLASS_SESSION',
+            'section' => $sectionSubject?->section?->section ?? '',
+            'subject' => $sectionSubject?->subject?->subject ?? '',
+            'faculty' => $session->faculty?->name ?? $sectionSubject?->faculty?->name ?? '',
+            'session_id' => $session->id,
+        ]);
+    }
+
+    private function shouldBroadcastSessionCreation(Request $request): bool
+    {
+        return $request->is('api/schedule-sessions/create');
     }
 
     private function validatePayload(Request $request, bool $isUpdate = false, ?ScheduleSession $record = null): array
