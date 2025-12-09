@@ -220,7 +220,20 @@ class ScheduleSessionController extends Controller
             'end_time' => $endTime,
         ]);
 
-        return $this->successResponse($record->fresh(['sectionSubjectSchedule', 'faculty', 'room']));
+        $record = $record->fresh(['sectionSubjectSchedule', 'faculty', 'room']);
+
+        if ($this->shouldBroadcastSessionClosure()) {
+            $this->mqttPublisher->publish([
+                'mode' => 'CLEAR_SESSION',
+            ], self::LCD_DISPLAY_TOPIC);
+        }
+
+        return $this->successResponse($record);
+    }
+
+    private function shouldBroadcastSessionClosure(): bool
+    {
+        return request()->is('api/schedule-sessions/*/close');
     }
 
     public function destroy(string $id)
