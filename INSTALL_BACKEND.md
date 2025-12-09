@@ -28,12 +28,15 @@ cp src/.env.example src/.env
 2. Create a root environment file for Docker Compose:
 
 ```bash
-touch .env
+cp .env.example .env
 ```
+
+3. Set the ADMIN_API_TOKEN in the root .env file (you can generate a secure token):
+   - Refer to [API Token Management Guide](src/docs/API_TOKEN_MANAGEMENT.md) for instructions on generating secure tokens
 
 3. Edit the environment files as needed:
    - `src/.env` contains backend-specific configuration
-   - `.env` contains Docker Compose and service configuration
+   - `.env` contains Docker Compose, service configuration, and ADMIN_API_TOKEN
 
 ## Step 3: Build and Start the Services
 
