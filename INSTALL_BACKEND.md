@@ -12,8 +12,9 @@ This guide will walk you through installing and setting up the Smart Guard API b
 If you haven't already, clone the repository:
 
 ```bash
-git clone <repository-url>
-cd smart-guard/smart-guard-api
+cd ~
+git clone https://github.com/tekabu/smart-guard-v2.0-backend.git
+cd smart-guard-v2.0-backend
 ```
 
 ## Step 2: Environment Configuration
