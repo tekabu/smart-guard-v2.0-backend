@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_fingerprints', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->integer('fingerprint_id')->unique();
+            $table->string('fingerprint_id', 100)->unique();
             $table->boolean('active')->default(true);
             $table->timestamps();
         });

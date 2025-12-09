@@ -23,7 +23,7 @@ class UserFingerprintSeeder extends Seeder
             for ($i = 0; $i < $fingerprintCount; $i++) {
                 UserFingerprint::create([
                     'user_id' => $user->id,
-                    'fingerprint_id' => fake()->unique()->numberBetween(10000, 99999),
+                    'fingerprint_id' => strtoupper(fake()->unique()->bothify('FP-########')),
                     'active' => true,
                 ]);
             }

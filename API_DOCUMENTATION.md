@@ -388,7 +388,7 @@ Manage fingerprint registrations for STUDENT and FACULTY users. Includes user re
 ```json
 {
   "user_id": 1,
-  "fingerprint_id": 12345,
+  "fingerprint_id": "FP-12345",
   "active": true
 }
 ```
@@ -397,19 +397,19 @@ Manage fingerprint registrations for STUDENT and FACULTY users. Includes user re
 ```json
 {
   "user_id": 2,
-  "fingerprint_id": 54321,
+  "fingerprint_id": "FP-54321",
   "active": false
 }
 ```
 
 **Validation Rules (POST):**
 - `user_id` - required, must exist in users table
-- `fingerprint_id` - required, integer, must be unique
+- `fingerprint_id` - required, string (max 100), must be unique
 - `active` - optional, boolean (default: true)
 
 **Validation Rules (PUT):**
 - `user_id` - optional, must exist in users table
-- `fingerprint_id` - optional, integer, must be unique (excludes current record)
+- `fingerprint_id` - optional, string (max 100), must be unique (excludes current record)
 - `active` - optional, boolean
 
 **Response (GET single, POST, PUT):**
@@ -419,7 +419,7 @@ Manage fingerprint registrations for STUDENT and FACULTY users. Includes user re
   "data": {
     "id": 1,
     "user_id": 1,
-    "fingerprint_id": 12345,
+    "fingerprint_id": "FP-12345",
     "active": true,
     "created_at": "2025-11-28T10:00:00.000000Z",
     "updated_at": "2025-11-28T10:00:00.000000Z",
@@ -441,7 +441,7 @@ Manage fingerprint registrations for STUDENT and FACULTY users. Includes user re
     {
       "id": 1,
       "user_id": 1,
-      "fingerprint_id": 12345,
+      "fingerprint_id": "FP-12345",
       "active": true,
       "created_at": "2025-11-28T10:00:00.000000Z",
       "updated_at": "2025-11-28T10:00:00.000000Z",
@@ -1710,7 +1710,7 @@ Manage communication between ESP32 device boards and API. Requires device board 
 **Request Body (POST /api/device-communications/validate-fingerprint):**
 ```json
 {
-  "fingerprint_id": "12345"
+  "fingerprint_id": "FP-12345"
 }
 ```
 
@@ -1738,7 +1738,7 @@ Manage communication between ESP32 device boards and API. Requires device board 
 **Request Body (POST /api/device-communications/class-sessions/from-fingerprint):**
 ```json
 {
-  "fingerprint_id": "12345"
+  "fingerprint_id": "FP-12345"
 }
 ```
 
@@ -1749,16 +1749,16 @@ Manage communication between ESP32 device boards and API. Requires device board 
 - `card_id` - required, string
 
 **Validation Rules (POST /api/device-communications/validate-fingerprint):**
-- `fingerprint_id` - required, string or integer
+- `fingerprint_id` - required, string (max 100)
 
 **Validation Rules (POST /api/device-communications/scan-card):**
 - `card_id` - required, string
 
 **Validation Rules (POST /api/device-communications/scan-fingerprint):**
-- `fingerprint_id` - required, string or integer
+- `fingerprint_id` - required, string (max 100)
 
 **Validation Rules for class session creation:**
-- `card_id` / `fingerprint_id` - required
+- `card_id` / `fingerprint_id` - required (fingerprint max 100 chars)
 - User must be FACULTY role
 - Must have active schedule period for current day/time
 

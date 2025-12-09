@@ -33,7 +33,7 @@ class UserFingerprintController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'fingerprint_id' => 'required|integer|unique:user_fingerprints,fingerprint_id',
+            'fingerprint_id' => 'required|string|max:100|unique:user_fingerprints,fingerprint_id',
             'active' => 'boolean',
         ]);
 
@@ -63,7 +63,7 @@ class UserFingerprintController extends Controller
 
         $updateRules = [
             'user_id' => 'sometimes|exists:users,id',
-            'fingerprint_id' => 'sometimes|integer|unique:user_fingerprints,fingerprint_id,{id}',
+            'fingerprint_id' => 'sometimes|string|max:100|unique:user_fingerprints,fingerprint_id,{id}',
             'active' => 'sometimes|boolean',
         ];
 

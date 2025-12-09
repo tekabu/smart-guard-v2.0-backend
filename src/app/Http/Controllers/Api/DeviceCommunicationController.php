@@ -96,7 +96,7 @@ class DeviceCommunicationController extends Controller
         $board = $request->user();
 
         $validated = $request->validate([
-            'fingerprint_id' => ['required', 'string'],
+            'fingerprint_id' => ['required', 'string', 'max:100'],
         ]);
 
         $fingerprint = UserFingerprint::where('fingerprint_id', $validated['fingerprint_id'])->with('user')->first();
@@ -137,7 +137,7 @@ class DeviceCommunicationController extends Controller
     public function scanFingerprint(Request $request)
     {
         $request->validate([
-            'fingerprint_id' => ['required', 'string'],
+            'fingerprint_id' => ['required', 'string', 'max:100'],
         ]);
 
         return $this->successResponse([
@@ -164,7 +164,7 @@ class DeviceCommunicationController extends Controller
     public function createClassSessionFromFingerprint(Request $request)
     {
         $validated = $request->validate([
-            'fingerprint_id' => ['required', 'string'],
+            'fingerprint_id' => ['required', 'string', 'max:100'],
         ]);
 
         $fingerprint = UserFingerprint::where('fingerprint_id', $validated['fingerprint_id'])->with('user')->first();

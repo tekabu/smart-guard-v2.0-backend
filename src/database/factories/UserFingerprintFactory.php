@@ -14,7 +14,7 @@ class UserFingerprintFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'fingerprint_id' => fake()->unique()->numberBetween(10000, 99999),
+            'fingerprint_id' => strtoupper(fake()->unique()->bothify('FP-########')),
             'active' => true,
         ];
     }

@@ -73,6 +73,8 @@ services:
       API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     restart: unless-stopped
+    volumes: 
+      - ./python/src:/app
     networks:
       - smart-guard
 
@@ -90,6 +92,8 @@ services:
       API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     restart: unless-stopped
+    volumes: 
+      - ./python/src:/app
     networks:
       - smart-guard
 

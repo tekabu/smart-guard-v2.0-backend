@@ -98,7 +98,33 @@ def fetch_student_attendance(student_id: Any) -> Optional[Dict[str, Any]]:
     return payload.get("data")
 
 
-def process_rfid_payload(message: Dict[str, Any]) -> None:
+def send_lock_command(client: mqtt.Client) -> None:
+    """
+    Send lock command to MQTT topic: "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock"
+    {
+        "mode": "OPEN",
+        "delay": 3
+    }
+    """
+    topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock"
+    payload = {
+        "mode": "OPEN",
+        "delay": 3
+    }
+    
+    try:
+        result = client.publish(topic, json.dumps(payload))
+        
+        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+            LOGGER.info("Successfully sent lock command to topic %s", topic)
+        else:
+            LOGGER.error("Failed to send lock command to topic %s: %s", topic, result.rc)
+            
+    except Exception as exc:
+        LOGGER.error("Error sending lock command: %s", exc)
+
+
+def process_rfid_payload(message: Dict[str, Any], client: mqtt.Client) -> None:
     if "data" not in message or "mode" not in message:
         LOGGER.warning("Payload missing required keys: %s", message)
         return
@@ -143,6 +169,9 @@ def process_rfid_payload(message: Dict[str, Any]) -> None:
         student_id,
         attendance,
     )
+    
+    # Send lock command after fetching student attendance
+    send_lock_command(client)
 
 
 def _on_connect(client: mqtt.Client, userdata, flags, rc) -> None:
@@ -162,7 +191,7 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
         return
 
     LOGGER.debug("Message on %s: %s", msg.topic, message)
-    process_rfid_payload(message)
+    process_rfid_payload(message, client)
 
 
 def build_mqtt_client() -> mqtt.Client:

@@ -25,12 +25,12 @@ class UserFingerprintControllerTest extends TestCase
     {
         $authUser = User::factory()->create(); // Acting user
         $user = User::factory()->create();
-        $fingerprintData = ['user_id' => $user->id, 'fingerprint_id' => 12345, 'active' => true];
+        $fingerprintData = ['user_id' => $user->id, 'fingerprint_id' => 'FP-12345', 'active' => true];
         $response = $this->actingAs($authUser)->postJson('/api/user-fingerprints', $fingerprintData);
         $response->assertStatus(201)
             ->assertJsonStructure(['status', 'data'])
-            ->assertJsonPath('data.fingerprint_id', 12345);
-        $this->assertDatabaseHas('user_fingerprints', ['fingerprint_id' => 12345]);
+            ->assertJsonPath('data.fingerprint_id', 'FP-12345');
+        $this->assertDatabaseHas('user_fingerprints', ['fingerprint_id' => 'FP-12345']);
     }
 
     public function test_can_show_fingerprint()
@@ -47,14 +47,14 @@ class UserFingerprintControllerTest extends TestCase
     public function test_can_show_fingerprint_by_fingerprint_id()
     {
         $user = User::factory()->create(); // Acting user
-        $fingerprint = UserFingerprint::factory()->create(['fingerprint_id' => 777]);
+        $fingerprint = UserFingerprint::factory()->create(['fingerprint_id' => 'FP-777']);
 
         $response = $this->actingAs($user)->getJson('/api/user-fingerprints/fingerprint/' . $fingerprint->fingerprint_id);
 
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data'])
             ->assertJsonPath('data.id', $fingerprint->id)
-            ->assertJsonPath('data.fingerprint_id', 777);
+            ->assertJsonPath('data.fingerprint_id', 'FP-777');
     }
 
     public function test_can_update_fingerprint()
@@ -82,8 +82,8 @@ class UserFingerprintControllerTest extends TestCase
     {
         $authUser = User::factory()->create(); // Acting user
         $user = User::factory()->create();
-        UserFingerprint::factory()->create(['fingerprint_id' => 12345]);
-        $fingerprintData = ['user_id' => $user->id, 'fingerprint_id' => 12345];
+        UserFingerprint::factory()->create(['fingerprint_id' => 'FP-12345']);
+        $fingerprintData = ['user_id' => $user->id, 'fingerprint_id' => 'FP-12345'];
         $response = $this->actingAs($authUser)->postJson('/api/user-fingerprints', $fingerprintData);
         $response->assertStatus(422)->assertJsonValidationErrors(['fingerprint_id']);
     }
@@ -121,11 +121,11 @@ class UserFingerprintControllerTest extends TestCase
     {
         $authUser = User::factory()->create(); // Acting user
         $user = User::factory()->create();
-        $fingerprint1 = UserFingerprint::factory()->create(['fingerprint_id' => 11111]);
-        $fingerprint2 = UserFingerprint::factory()->create(['fingerprint_id' => 22222]);
+        $fingerprint1 = UserFingerprint::factory()->create(['fingerprint_id' => 'FP-11111']);
+        $fingerprint2 = UserFingerprint::factory()->create(['fingerprint_id' => 'FP-22222']);
 
         // Try to update fingerprint1 to use fingerprint2's fingerprint_id (which already exists)
-        $updateData = ['fingerprint_id' => 22222];
+        $updateData = ['fingerprint_id' => 'FP-22222'];
         $response = $this->actingAs($authUser)->putJson('/api/user-fingerprints/' . $fingerprint1->id, $updateData);
         $response->assertStatus(422)->assertJsonValidationErrors(['fingerprint_id']);
     }
