@@ -2,6 +2,14 @@
 
 This document explains how to generate and manage API tokens for admin users in the Smart Guard system.
 
+## Getting Started
+
+First, access the PHP container:
+
+```bash
+docker exec -it smart-guard-php bash
+```
+
 ## Overview
 
 Admin users can now generate Bearer tokens to access the full API system without needing to maintain a web session. This is particularly useful for:
