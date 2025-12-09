@@ -17,6 +17,10 @@ class ScheduleSessionController extends Controller
     use ApiResponse;
 
     private const DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    private const LCD_DISPLAY_TOPIC = 'dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lcd';
+    private const LOCK_TOPIC = 'dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock';
+
+    private bool $shouldPublishEndSessionOnDuplicate = false;
 
     public function __construct(private readonly SmartGuardMqttPublisher $mqttPublisher)
     {
@@ -113,6 +117,7 @@ class ScheduleSessionController extends Controller
             ]);
 
             $this->broadcastSessionCreated($record);
+            $this->sendLockOpenCommand();
         }
 
         return $this->successResponse($record, 201);
@@ -246,6 +251,8 @@ class ScheduleSessionController extends Controller
 
     private function validatePayload(Request $request, bool $isUpdate = false, ?ScheduleSession $record = null): array
     {
+        $this->shouldPublishEndSessionOnDuplicate = $request->is('api/schedule-sessions/create');
+
         $facultyRule = Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'FACULTY'));
         $rules = [
             'section_subject_schedule_id' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:section_subject_schedules,id'],
@@ -314,32 +321,59 @@ class ScheduleSessionController extends Controller
 
     private function ensureUniqueSession(array $data, ?int $ignoreId = null): void
     {
-        if (!isset($data['section_subject_schedule_id'])) {
-            return;
+        $existingSession = $this->findExistingSession($data, $ignoreId);
+
+        if ($existingSession) {
+            $this->handleDuplicateSession($existingSession);
+
+            throw ValidationException::withMessages([
+                'start_date' => ['A session for this schedule on the specified start date already exists.'],
+            ]);
+        }
+    }
+
+    private function findExistingSession(array $data, ?int $ignoreId = null): ?ScheduleSession
+    {
+        if (!isset($data['section_subject_schedule_id']) || !array_key_exists('start_date', $data)) {
+            return null;
         }
 
         $query = ScheduleSession::query()
             ->where('section_subject_schedule_id', $data['section_subject_schedule_id']);
 
-        if (array_key_exists('start_date', $data)) {
-            if (is_null($data['start_date'])) {
-                $query->whereNull('start_date');
-            } else {
-                $query->whereDate('start_date', $data['start_date']);
-            }
+        if (is_null($data['start_date'])) {
+            $query->whereNull('start_date');
         } else {
-            return;
+            $query->whereDate('start_date', $data['start_date']);
         }
 
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
 
-        if ($query->exists()) {
-            throw ValidationException::withMessages([
-                'start_date' => ['A session for this schedule on the specified start date already exists.'],
-            ]);
+        return $query->first();
+    }
+
+    private function handleDuplicateSession(ScheduleSession $existingSession): void
+    {
+        if (!$this->shouldPublishEndSessionOnDuplicate) {
+            return;
         }
+
+        $this->mqttPublisher->publish([
+            'mode' => 'END_SESSION',
+            'session_id' => $existingSession->id,
+        ], self::LCD_DISPLAY_TOPIC);
+
+        $this->sendLockOpenCommand();
+    }
+
+    private function sendLockOpenCommand(): void
+    {
+        $this->mqttPublisher->publish([
+            'mode' => 'OPEN',
+            'delay' => 3,
+        ], self::LOCK_TOPIC);
     }
 
     private function ensureCreationRules(array $data, bool $isUpdate): void

@@ -11,10 +11,10 @@ use Throwable;
 
 class SmartGuardMqttPublisher
 {
-    public function publish(array $payload): void
+    public function publish(array $payload, ?string $overrideTopic = null): void
     {
         $host = Config::get('mqtt.host');
-        $topic = Config::get('mqtt.topics.class_session');
+        $topic = $overrideTopic ?? Config::get('mqtt.topics.class_session');
 
         if (!$host || !$topic) {
             return;

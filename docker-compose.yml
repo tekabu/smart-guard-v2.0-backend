@@ -97,6 +97,26 @@ services:
     networks:
       - smart-guard
 
+  smart-guard-close-schedule-session:
+    build: ./python
+    container_name: smart-guard-python-close-schedule-session
+    command: python smart_guard_listener_close_schedule_session.py
+    environment:
+      MQTT_BROKER: ${MQTT_BROKER:-broker.emqx.io}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      MQTT_TOPICS: ${MQTT_TOPICS_LCD_RESPONSE:-dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lcd-response}
+      MQTT_CLEAR_TOPIC: ${MQTT_CLEAR_TOPIC:-dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lcd}
+      API_BASE_URL: ${API_BASE_URL:-http://smart-guard-nginx/api}
+      API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    restart: unless-stopped
+    volumes:
+      - ./python/src:/app
+    networks:
+      - smart-guard
+
   # smart-guard-student-attendance:
   #   build: ./python
   #   container_name: smart-guard-python-student-attendance
