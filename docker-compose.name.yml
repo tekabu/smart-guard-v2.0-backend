@@ -1,35 +1,45 @@
 services:
   nginx:
-    container_name: test001-nginx
+    container_name: test003-bmdpbng
     networks:
-      - test001
+      - test003
 
   php:
-    container_name: test001-php
+    container_name: test003-cGhw
     networks:
-      - test001
+      - test003
 
   mysql:
-    container_name: test001-mysql
+    container_name: test003-bXlzcWw
     networks:
-      - test001
+      - test003
 
   phpmyadmin:
-    container_name: test001-phpmyadmin
+    container_name: test003-cGhwbXlhZG1pbg
     networks:
-      - test001
+      - test003
 
-  filebrowser:
-    container_name: test001-filebrowser
+  smart-guard-schedule-session:
+    container_name: test003-c21hcnQtZ3VhcmQtc2NoZWR1bGUtc2Vzc2lvbg
     networks:
-      - test001
+      - test003
 
-  cloudflared:
-    container_name: test001-cloudflared
+  smart-guard-fingerprint-schedule-session:
+    container_name: test003-c21hcnQtZ3VhcmQtZmluZ2VycHJpbnQtc2NoZWR1bGUtc2Vzc2lvbg
     networks:
-      - test001
+      - test003
+
+  smart-guard-close-schedule-session:
+    container_name: test003-c21hcnQtZ3VhcmQtY2xvc2Utc2NoZWR1bGUtc2Vzc2lvbg
+    networks:
+      - test003
+
+  smart-guard-student-attendance-fingerprint:
+    container_name: test003-c21hcnQtZ3VhcmQtc3R1ZGVudC1hdHRlbmRhbmNlLWZpbmdlcnByaW50
+    networks:
+      - test003
 
 networks:
-  test001:
+  test003:
     driver: bridge
-    name: test001
+    name: test003
