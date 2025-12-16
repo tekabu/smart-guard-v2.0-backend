@@ -9,7 +9,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./src:/var/www/html
     ports:
-      - 8021:80
+      - 8031:80
     restart: unless-stopped
     networks:
       - smart-guard
@@ -31,7 +31,7 @@ services:
     image: mysql:8.0
     container_name: smart-guard-mysql
     ports:
-      - "8022:3306"
+      - "8032:3306"
     volumes:
       - ./data/mysql:/var/lib/mysql
       - "/etc/timezone:/etc/timezone:ro"
@@ -54,7 +54,7 @@ services:
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: root_password
     ports:
-      - "8023:80"
+      - "8033:80"
     depends_on:
       - mysql
     networks:
