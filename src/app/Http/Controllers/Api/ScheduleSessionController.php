@@ -400,7 +400,7 @@ class ScheduleSessionController extends Controller
     {
         $this->mqttPublisher->publish([
             'mode' => 'OPEN',
-            'delay' => 3,
+            'delay' => 1,
         ], self::LOCK_TOPIC);
     }
 
