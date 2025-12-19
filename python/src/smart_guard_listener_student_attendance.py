@@ -41,6 +41,8 @@ API_TOKEN = os.getenv(
     "58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef",
 )
 
+LOCK_OPEN_DELAY = int(os.getenv("LOCK_OPEN_DELAY", "3"))
+
 
 def _api_headers() -> Dict[str, str]:
     return {
@@ -110,7 +112,7 @@ def send_lock_command(client: mqtt.Client, position: Optional[str] = None) -> No
     topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock"
     payload = {
         "mode": "OPEN",
-        "delay": 3
+        "delay": LOCK_OPEN_DELAY
     }
 
     if position:

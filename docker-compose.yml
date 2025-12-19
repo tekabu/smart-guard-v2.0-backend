@@ -72,8 +72,9 @@ services:
       API_BASE_URL: ${API_BASE_URL:-http://smart-guard-nginx/api}
       API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOCK_OPEN_DELAY: ${LOCK_OPEN_DELAY:-3}
     restart: unless-stopped
-    volumes: 
+    volumes:
       - ./python/src:/app
     networks:
       - smart-guard
@@ -91,6 +92,7 @@ services:
       API_BASE_URL: ${API_BASE_URL:-http://smart-guard-nginx/api}
       API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOCK_OPEN_DELAY: ${LOCK_OPEN_DELAY:-3}
     restart: unless-stopped
     volumes:
       - ./python/src:/app
@@ -149,6 +151,7 @@ services:
       API_BASE_URL: ${API_BASE_URL:-http://smart-guard-nginx/api}
       API_TOKEN: ${ADMIN_API_TOKEN:-58|FQntWTcX1ZSdKAp8ItJAhNBl9OBmYq2HYE6quIP605d554ef}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOCK_OPEN_DELAY: ${LOCK_OPEN_DELAY:-3}
     restart: unless-stopped
     volumes:
       - ./python/src:/app
