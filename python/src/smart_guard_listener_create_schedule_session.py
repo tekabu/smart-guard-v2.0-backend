@@ -104,6 +104,10 @@ def fetch_faculty_schedule(faculty_id: Any) -> List[Dict[str, Any]]:
 def create_schedule_session(section_subject_schedule_id: Any, client: mqtt.Client, position: Optional[str] = None) -> bool:
     url = f"{API_BASE}/schedule-sessions/create"
     params = {"start": "1"}
+
+    if position:
+        params["position"] = position
+
     data = {"section_subject_schedule_id": str(section_subject_schedule_id)}
     try:
         resp = requests.post(

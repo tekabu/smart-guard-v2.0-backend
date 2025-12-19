@@ -398,9 +398,12 @@ class ScheduleSessionController extends Controller
 
     private function sendLockOpenCommand(): void
     {
+        $position = request()->query('position', 'FRONT');
+
         $this->mqttPublisher->publish([
             'mode' => 'OPEN',
             'delay' => 1,
+            'position' => $position,
         ], self::LOCK_TOPIC);
     }
 
