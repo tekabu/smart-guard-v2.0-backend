@@ -9,6 +9,7 @@ use App\Services\Mqtt\SmartGuardMqttPublisher;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -140,7 +141,21 @@ class ScheduleSessionController extends Controller
             ]);
         }
 
-        $now = $this->ensureScheduleIsActiveNow($sectionSchedule);
+        try {
+            $now = $this->ensureScheduleIsActiveNow($sectionSchedule);
+        } catch (ValidationException $e) {
+            // Send MQTT notification when no active schedule
+            $errorMessages = $e->errors();
+            $logMessage = $errorMessages['section_subject_schedule_id'][0] ?? 'No active schedule available';
+
+            $topic = Config::get('mqtt.topics.rfid_response');
+            $this->mqttPublisher->publish([
+                'log' => $logMessage,
+            ], $topic);
+
+            throw $e;
+        }
+
         $currentDay = strtoupper($now->format('l'));
 
         $shouldStart = $request->boolean('start');
