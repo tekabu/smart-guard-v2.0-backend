@@ -103,7 +103,7 @@ def fetch_faculty_schedule(faculty_id: Any) -> List[Dict[str, Any]]:
     return data
 
 
-def create_schedule_session(section_subject_schedule_id: Any, client: mqtt.Client) -> bool:
+def create_schedule_session(section_subject_schedule_id: Any, client: mqtt.Client, position: Optional[str] = None) -> bool:
     url = f"{API_BASE}/schedule-sessions/create"
     params = {"start": "1"}
     data = {"section_subject_schedule_id": str(section_subject_schedule_id)}
@@ -133,16 +133,20 @@ def create_schedule_session(section_subject_schedule_id: Any, client: mqtt.Clien
         )
         return False
 
-    send_lock_command(client)
+    send_lock_command(client, position)
 
     LOGGER.info("Created session for schedule %s", section_subject_schedule_id)
     return True
 
 
-def send_lock_command(client: mqtt.Client) -> None:
+def send_lock_command(client: mqtt.Client, position: Optional[str] = None) -> None:
     """Send lock command to the MQTT lock topic."""
     topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock"
     payload = {"mode": "OPEN", "delay": 3}
+
+    if position:
+        payload["position"] = position
+
     try:
         result = client.publish(topic, json.dumps(payload))
         if result.rc == mqtt.MQTT_ERR_SUCCESS:
@@ -192,6 +196,8 @@ def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) ->
         LOGGER.warning("Payload has empty fingerprint_id: %s", message)
         return
 
+    position = message.get("position")
+
     LOGGER.info("Processing fingerprint_id %s", fingerprint_id)
     user_data = fetch_user_by_fingerprint(fingerprint_id)
     if not user_data:
@@ -225,7 +231,7 @@ def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) ->
         if schedule_id is None:
             LOGGER.warning("Schedule item missing id: %s", schedule)
             continue
-        create_schedule_session(schedule_id, client)
+        create_schedule_session(schedule_id, client, position)
 
 
 def process_payload(topic: str, message: Dict[str, Any], client: mqtt.Client) -> None:

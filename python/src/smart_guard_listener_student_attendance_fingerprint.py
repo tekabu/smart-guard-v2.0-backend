@@ -106,10 +106,13 @@ def fetch_student_attendance(student_id: Any) -> Optional[Dict[str, Any]]:
     return payload.get("data")
 
 
-def send_lock_command(client: mqtt.Client) -> None:
+def send_lock_command(client: mqtt.Client, position: Optional[str] = None) -> None:
     """Send lock command to the MQTT lock topic."""
     topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lock"
     payload = {"mode": "OPEN", "delay": 3}
+
+    if position:
+        payload["position"] = position
 
     try:
         result = client.publish(topic, json.dumps(payload))
@@ -136,6 +139,8 @@ def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) ->
     if not fingerprint_id:
         LOGGER.warning("Payload has empty fingerprint_id: %s", message)
         return
+
+    position = message.get("position")
 
     LOGGER.info("Processing fingerprint_id %s", fingerprint_id)
     user_data = fetch_user_by_fingerprint(fingerprint_id)
@@ -169,7 +174,7 @@ def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) ->
         attendance,
     )
 
-    send_lock_command(client)
+    send_lock_command(client, position)
 
 
 def _on_connect(client: mqtt.Client, userdata, flags, rc) -> None:
