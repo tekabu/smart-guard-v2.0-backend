@@ -153,6 +153,31 @@ def send_lock_command(client: mqtt.Client) -> None:
         LOGGER.error("Error sending lock command: %s", exc)
 
 
+def send_no_schedule_notification(client: mqtt.Client) -> None:
+    """
+    Send notification to MQTT topic when no schedule is found.
+    Topic: "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-fingerprint-response"
+    {
+        "log": "No schedule found"
+    }
+    """
+    topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-fingerprint-response"
+    payload = {
+        "log": "No schedule found"
+    }
+
+    try:
+        result = client.publish(topic, json.dumps(payload))
+
+        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+            LOGGER.info("Successfully sent no schedule notification to topic %s", topic)
+        else:
+            LOGGER.error("Failed to send no schedule notification to topic %s: %s", topic, result.rc)
+
+    except Exception as exc:
+        LOGGER.error("Error sending no schedule notification: %s", exc)
+
+
 def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) -> None:
     if "data" not in message or "mode" not in message:
         LOGGER.warning("Payload missing required keys: %s", message)
@@ -192,6 +217,7 @@ def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) ->
     schedules = fetch_faculty_schedule(faculty_id)
     if not schedules:
         LOGGER.info("No schedules returned for faculty %s", faculty_id)
+        send_no_schedule_notification(client)
         return
 
     for schedule in schedules:
