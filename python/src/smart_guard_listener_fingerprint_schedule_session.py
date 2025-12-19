@@ -157,7 +157,7 @@ def send_lock_command(client: mqtt.Client, position: Optional[str] = None) -> No
         LOGGER.error("Error sending lock command: %s", exc)
 
 
-def send_no_schedule_notification(client: mqtt.Client) -> None:
+def send_no_schedule_notification(client: mqtt.Client, position: Optional[str] = None) -> None:
     """
     Send notification to MQTT topic when no schedule is found.
     Topic: "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-fingerprint-response"
@@ -181,6 +181,38 @@ def send_no_schedule_notification(client: mqtt.Client) -> None:
     except Exception as exc:
         LOGGER.error("Error sending no schedule notification: %s", exc)
 
+    # Also send access denied notification
+    send_access_denied_notification(client, position, "No schedule found")
+
+
+def send_access_denied_notification(client: mqtt.Client, position: Optional[str] = None, reason: str = "Access denied") -> None:
+    """
+    Send access denied notification to MQTT topic.
+    Topic: "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-access-denied"
+    {
+        "position": "FRONT",
+        "reason": "No schedule found"
+    }
+    """
+    topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-access-denied"
+    payload = {
+        "reason": reason
+    }
+
+    if position:
+        payload["position"] = position
+
+    try:
+        result = client.publish(topic, json.dumps(payload))
+
+        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+            LOGGER.info("Successfully sent access denied notification to topic %s", topic)
+        else:
+            LOGGER.error("Failed to send access denied notification to topic %s: %s", topic, result.rc)
+
+    except Exception as exc:
+        LOGGER.error("Error sending access denied notification: %s", exc)
+
 
 def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) -> None:
     if "data" not in message or "mode" not in message:
@@ -201,6 +233,7 @@ def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) ->
     LOGGER.info("Processing fingerprint_id %s", fingerprint_id)
     user_data = fetch_user_by_fingerprint(fingerprint_id)
     if not user_data:
+        send_access_denied_notification(client, position, "Fingerprint not registered")
         return
 
     user_info = user_data.get("user") or {}
@@ -223,7 +256,7 @@ def process_fingerprint_payload(message: Dict[str, Any], client: mqtt.Client) ->
     schedules = fetch_faculty_schedule(faculty_id)
     if not schedules:
         LOGGER.info("No schedules returned for faculty %s", faculty_id)
-        send_no_schedule_notification(client)
+        send_no_schedule_notification(client, position)
         return
 
     for schedule in schedules:

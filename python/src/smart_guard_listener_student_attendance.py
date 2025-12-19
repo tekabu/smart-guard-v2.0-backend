@@ -128,6 +128,35 @@ def send_lock_command(client: mqtt.Client, position: Optional[str] = None) -> No
         LOGGER.error("Error sending lock command: %s", exc)
 
 
+def send_access_denied_notification(client: mqtt.Client, position: Optional[str] = None, reason: str = "Access denied") -> None:
+    """
+    Send access denied notification to MQTT topic.
+    Topic: "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-access-denied"
+    {
+        "position": "FRONT",
+        "reason": "No attendance created"
+    }
+    """
+    topic = "dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-access-denied"
+    payload = {
+        "reason": reason
+    }
+
+    if position:
+        payload["position"] = position
+
+    try:
+        result = client.publish(topic, json.dumps(payload))
+
+        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+            LOGGER.info("Successfully sent access denied notification to topic %s", topic)
+        else:
+            LOGGER.error("Failed to send access denied notification to topic %s: %s", topic, result.rc)
+
+    except Exception as exc:
+        LOGGER.error("Error sending access denied notification: %s", exc)
+
+
 def process_rfid_payload(message: Dict[str, Any], client: mqtt.Client) -> None:
     if "data" not in message or "mode" not in message:
         LOGGER.warning("Payload missing required keys: %s", message)
@@ -147,6 +176,7 @@ def process_rfid_payload(message: Dict[str, Any], client: mqtt.Client) -> None:
     LOGGER.info("Processing card_id %s", card_id)
     user_data = fetch_user_by_card(card_id)
     if not user_data:
+        send_access_denied_notification(client, position, "RFID not registered")
         return
 
     user_info = user_data.get("user") or {}
@@ -168,6 +198,7 @@ def process_rfid_payload(message: Dict[str, Any], client: mqtt.Client) -> None:
 
     attendance = fetch_student_attendance(student_id)
     if attendance is None:
+        send_access_denied_notification(client, position, "No attendance created")
         return
 
     LOGGER.info(
