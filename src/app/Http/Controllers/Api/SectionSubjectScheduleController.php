@@ -133,6 +133,7 @@ class SectionSubjectScheduleController extends Controller
             'faculty',
         ])
             ->where('day_of_week', $currentDay)
+            ->whereNull('end_time')
             ->whereHas('sectionSubjectSchedule', function ($query) use ($currentTime, $assignedSectionSubjectIds) {
                 $query->whereIn('section_subject_id', $assignedSectionSubjectIds)
                     ->where('start_time', '<=', $currentTime)
