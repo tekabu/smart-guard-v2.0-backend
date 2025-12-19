@@ -10,6 +10,7 @@ return [
     'keep_alive' => env('MQTT_KEEP_ALIVE', 60),
     'topics' => [
         'class_session' => env('MQTT_TOPIC_CLASS_SESSION', 'dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-lcd'),
+        'rfid_response' => env('MQTT_TOPIC_RFID_RESPONSE', 'dJfmRURS5LaJtZ1NZAHX86A9uAk4LZ-smart-guard-rfid-response'),
     ],
     'qos' => env('MQTT_QOS', 0),
     'retain' => env('MQTT_RETAIN', false),

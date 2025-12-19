@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserRfid;
+use App\Services\Mqtt\SmartGuardMqttPublisher;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
+use Illuminate\Support\Facades\Config;
 
 class UserRfidController extends Controller
 {
@@ -50,12 +53,28 @@ class UserRfidController extends Controller
 
     public function showByCardId(string $cardId)
     {
-        $record = UserRfid::query()
-            ->with(['user'])
-            ->where('card_id', $cardId)
-            ->firstOrFail();
+        try {
+            $record = UserRfid::query()
+                ->with(['user'])
+                ->where('card_id', $cardId)
+                ->firstOrFail();
 
-        return $this->successResponse($record);
+            return $this->successResponse($record);
+        } catch (ModelNotFoundException $e) {
+            // Publish MQTT message for RFID not found
+            $mqttPublisher = new SmartGuardMqttPublisher();
+            $topic = Config::get('mqtt.topics.rfid_response');
+
+            $mqttPublisher->publish([
+                'method' => 'RFID',
+                'log' => 'RFID not found in database',
+                'position' => '',
+                'reference' => '',
+                'mode' => 'VERIFY',
+            ], $topic);
+
+            throw $e;
+        }
     }
 
     public function update(Request $request, string $id)
